@@ -386,7 +386,9 @@
 
   if ('serviceWorker' in navigator) {
     var swHadControllerAtLoad = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register('service-worker.js').catch(function () {});
+    // updateViaCache: 'none' makes the browser always check service-worker.js itself
+    // fresh over the network, bypassing GitHub Pages' Cache-Control: max-age=600.
+    navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).catch(function () {});
     navigator.serviceWorker.addEventListener('controllerchange', function () {
       // Only a genuine update replaces an already-active controller;
       // the very first install also fires this event and must not show the banner.

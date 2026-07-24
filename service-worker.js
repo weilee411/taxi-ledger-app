@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taxi-ledger-v3';
+const CACHE_NAME = 'taxi-ledger-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -30,8 +30,11 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
+  // cache: 'no-store' bypasses the browser's own HTTP cache (GitHub Pages sends
+  // Cache-Control: max-age=600 on these files), otherwise this "network-first"
+  // fetch can still be silently answered from stale browser cache for 10 minutes.
   event.respondWith(
-    fetch(event.request).then(function (response) {
+    fetch(event.request, { cache: 'no-store' }).then(function (response) {
       var copy = response.clone();
       caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
       return response;
