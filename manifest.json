@@ -1,0 +1,16 @@
+{
+  "name": "記帳本",
+  "short_name": "記帳本",
+  "description": "每天輸入 568 跟其他平台收入,自動算好對帳金額,資料存在裝置上",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EEF2EE",
+  "theme_color": "#2B6A78",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
+  ]
+}

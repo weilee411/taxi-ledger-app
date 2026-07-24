@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>記帳本 · 今日輸入</title>
+<meta name="description" content="每天輸入 568 現金/線上支付跟其他平台收入,自動算好對帳金額,資料存在這支裝置上。">
+<meta name="theme-color" content="#2B6A78">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="記帳本">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --bg:#EEF2EE; --surface:#FFFFFF; --surface-alt:#E4EAE3; --ink:#16211D; --ink-muted:#57675E;
+    --border:#D4DCD3; --accent:#2B6A78; --accent-ink:#FFFFFF; --income:#2F8F5B; --expense:#B5502F; --pending:#A97A26;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#101512; --surface:#182420; --surface-alt:#212D28; --ink:#E8EEE9; --ink-muted:#8FA097; --border:#2A362F; --accent:#6BB8C7; --accent-ink:#0A2126; --income:#57C98A; --expense:#E28A63; --pending:#E0AD68; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Segoe UI", Roboto, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    max-width: 480px; margin: 0 auto;
+  }
+  .tnum { font-variant-numeric: tabular-nums; }
+  h1 { font-size: 20px; font-weight: 700; margin: 4px 0 2px; }
+  .sub { font-size: 12px; color: var(--ink-muted); margin: 0 0 20px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-muted); margin: 0 0 12px; font-weight: 700; }
+
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { font-size: 14px; font-weight: 600; flex: 1; }
+  .field input { width: 120px; text-align: right; font-size: 16px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); font-variant-numeric: tabular-nums; }
+  .field input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .field input[type="time"] { width: 120px; }
+
+  .subrow { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 6px 0; }
+  .subrow .lab { color: var(--ink-muted); }
+  .subrow .amt { color: var(--expense); font-weight: 700; }
+
+  .hero { text-align: center; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 4px; }
+  .hero .k { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hero .v { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .hero .v.neg { color: var(--expense); }
+  .hero .v.pos { color: var(--income); }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+  .stat .k { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; }
+  .stat .v { font-size: 20px; font-weight: 700; margin-top: 4px; }
+
+  .btn { display:block; width: 100%; text-align: center; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn:active { opacity: .85; }
+  .btn.ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); font-weight: 600; font-size: 13px; padding: 10px; }
+  .btn.small { padding: 8px 12px; font-size: 12px; width: auto; }
+
+  .msg { text-align:center; font-size: 12px; color: var(--income); min-height: 16px; margin: 8px 0 0; }
+
+  .hist-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .hist-item:first-child { border-top: none; }
+  .hist-item .d { font-size: 13px; font-weight: 700; width: 70px; flex-shrink:0; }
+  .hist-item .mid { flex: 1; font-size: 11px; color: var(--ink-muted); line-height: 1.5; }
+  .hist-item .amt { font-size: 14px; font-weight: 700; text-align: right; }
+  .hist-item .del { background:none; border:none; color: var(--expense); font-size: 18px; padding: 4px 6px; cursor: pointer; line-height:1; }
+  .empty { text-align: center; font-size: 12px; color: var(--ink-muted); padding: 12px 0; }
+
+  .foot { text-align:center; font-size: 10px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
+</style>
+</head>
+<body>
+  <h1>記帳本</h1>
+  <p class="sub">今日輸入 · 資料只存在這支裝置</p>
+
+  <div class="stats">
+    <div class="stat"><div class="k">今日總收入</div><div class="v tnum" id="todayTotal">$0</div></div>
+    <div class="stat"><div class="k">已記錄天數</div><div class="v tnum" id="dayCount">0</div></div>
+  </div>
+
+  <div class="card">
+    <h2>工時記錄</h2>
+    <div class="field"><label>上線時間</label><input type="time" id="startTime"></div>
+    <div class="field"><label>收工時間</label><input type="time" id="endTime"></div>
+    <div class="hero">
+      <div class="k">總工時</div>
+      <div class="v tnum" id="totalHours">0.0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>568 平台對帳</h2>
+    <div class="field"><label>現金車資</label><input type="number" inputmode="decimal" id="cash568" placeholder="0"></div>
+    <div class="field"><label>線上支付車資</label><input type="number" inputmode="decimal" id="online568" placeholder="0"></div>
+    <div class="subrow"><span class="lab">線上支付 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
+    <div class="subrow"><span class="lab">現金代扣 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
+    <div class="hero">
+      <div class="k">預估銀行應入帳</div>
+      <div class="v tnum" id="netOnline568">$0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>其他平台</h2>
+    <div class="field"><label>Uber</label><input type="number" inputmode="decimal" id="uber" placeholder="0"></div>
+    <div class="field"><label>Bolt</label><input type="number" inputmode="decimal" id="bolt" placeholder="0"></div>
+    <div class="field"><label>yoxi</label><input type="number" inputmode="decimal" id="yoxi" placeholder="0"></div>
+    <div class="field"><label>直客</label><input type="number" inputmode="decimal" id="direct" placeholder="0"></div>
+    <div class="field"><label>其他</label><input type="number" inputmode="decimal" id="other" placeholder="0"></div>
+  </div>
+
+  <button class="btn" id="saveBtn">儲存今天</button>
+  <p class="msg" id="saveMsg"></p>
+
+  <div class="card" style="margin-top:20px">
+    <h2>歷史紀錄</h2>
+    <div id="history"><div class="empty">還沒有紀錄</div></div>
+  </div>
+
+  <p class="foot">記帳本 v1 · 今日輸入<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'taxiLedgerDays';
+  var ids = ['cash568','online568','uber','bolt','yoxi','direct','other'];
+
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function loadDays() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveDays(days) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(days));
+  }
+
+  function num(id) {
+    var v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  function roundHalfAwayFromZero(n) {
+    return n < 0 ? -Math.round(-n) : Math.round(n);
+  }
+
+  function calcNetOnline568(cash, online) {
+    return roundHalfAwayFromZero(online * 0.85 - cash * 0.15);
+  }
+
+  function fmt(n) {
+    var sign = n < 0 ? '-$' : '$';
+    return sign + Math.abs(Math.round(n)).toLocaleString('zh-Hant-TW');
+  }
+
+  function calcHours(start, end) {
+    if (!start || !end) return 0;
+    var sp = start.split(':'), ep = end.split(':');
+    var startMin = (+sp[0]) * 60 + (+sp[1]);
+    var endMin = (+ep[0]) * 60 + (+ep[1]);
+    var diff = endMin - startMin;
+    if (diff < 0) diff += 24 * 60; // 跨午夜
+    return Math.round((diff / 60) * 10) / 10;
+  }
+
+  function updateLiveCalc() {
+    var cash = num('cash568'), online = num('online568');
+    var net = calcNetOnline568(cash, online);
+    var el = document.getElementById('netOnline568');
+    el.textContent = fmt(net);
+    el.className = 'v tnum ' + (net < 0 ? 'neg' : 'pos');
+
+    document.getElementById('cut568Online').textContent = '-' + fmt(roundHalfAwayFromZero(online * 0.15));
+    document.getElementById('cut568Cash').textContent = '-' + fmt(roundHalfAwayFromZero(cash * 0.15));
+
+    var total = cash + online + num('uber') + num('bolt') + num('yoxi') + num('direct') + num('other');
+    document.getElementById('todayTotal').textContent = fmt(total);
+
+    var start = document.getElementById('startTime').value;
+    var end = document.getElementById('endTime').value;
+    document.getElementById('totalHours').textContent = calcHours(start, end).toFixed(1);
+  }
+
+  ids.forEach(function (id) {
+    document.getElementById(id).addEventListener('input', updateLiveCalc);
+  });
+  ['startTime', 'endTime'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', updateLiveCalc);
+  });
+
+  function loadTodayIntoForm() {
+    var days = loadDays();
+    var today = days.find(function (d) { return d.date === todayKey(); });
+    if (today) {
+      ids.forEach(function (id) {
+        document.getElementById(id).value = today[id] || '';
+      });
+      document.getElementById('startTime').value = today.startTime || '';
+      document.getElementById('endTime').value = today.endTime || '';
+    }
+    updateLiveCalc();
+  }
+
+  function renderHistory() {
+    var days = loadDays().slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });
+    document.getElementById('dayCount').textContent = days.length;
+    var container = document.getElementById('history');
+    if (!days.length) {
+      container.innerHTML = '<div class="empty">還沒有紀錄</div>';
+      return;
+    }
+    container.innerHTML = '';
+    days.forEach(function (d) {
+      var cash = d.cash568 || 0, online = d.online568 || 0;
+      var net = calcNetOnline568(cash, online);
+      var total = cash + online + (d.uber||0) + (d.bolt||0) + (d.yoxi||0) + (d.direct||0) + (d.other||0);
+      var hours = calcHours(d.startTime, d.endTime);
+      var timeLine = (d.startTime || '?') + '–' + (d.endTime || '?') + '(' + hours.toFixed(1) + 'hr)';
+      var item = document.createElement('div');
+      item.className = 'hist-item';
+      item.innerHTML =
+        '<div class="d tnum">' + d.date.slice(5) + '</div>' +
+        '<div class="mid">' + timeLine + '<br>568現金 ' + fmt(cash) + ' · 線上 ' + fmt(online) + '<br>預估入帳 ' + fmt(net) + '</div>' +
+        '<div class="amt tnum">' + fmt(total) + '</div>' +
+        '<button class="del" data-date="' + d.date + '" aria-label="刪除">×</button>';
+      container.appendChild(item);
+    });
+    container.querySelectorAll('.del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var date = btn.getAttribute('data-date');
+        if (!confirm('刪除 ' + date + ' 的紀錄?')) return;
+        var days = loadDays().filter(function (d) { return d.date !== date; });
+        saveDays(days);
+        renderHistory();
+        if (date === todayKey()) loadTodayIntoForm();
+      });
+    });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var entry = { date: todayKey(), savedAt: new Date().toISOString() };
+    ids.forEach(function (id) { entry[id] = num(id); });
+    entry.startTime = document.getElementById('startTime').value;
+    entry.endTime = document.getElementById('endTime').value;
+    var days = loadDays().filter(function (d) { return d.date !== entry.date; });
+    days.push(entry);
+    saveDays(days);
+    renderHistory();
+    var msg = document.getElementById('saveMsg');
+    msg.textContent = '已儲存 ' + entry.date;
+    setTimeout(function () { msg.textContent = ''; }, 2500);
+  });
+
+  loadTodayIntoForm();
+  renderHistory();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
