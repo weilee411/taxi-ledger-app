@@ -56,10 +56,10 @@
   .hero .v.neg { color: var(--expense); }
   .hero .v.pos { color: var(--income); }
 
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
-  .stat .k { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; }
-  .stat .v { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 8px; }
+  .stat .k { font-size: 9px; color: var(--ink-muted); text-transform: uppercase; }
+  .stat .v { font-size: 17px; font-weight: 700; margin-top: 4px; }
 
   .btn { display:block; width: 100%; text-align: center; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
   .btn:active { opacity: .85; }
@@ -95,6 +95,7 @@
 
   <div class="stats">
     <div class="stat"><div class="k" id="todayStatLabel">今日總收入</div><div class="v tnum" id="todayTotal">$0</div></div>
+    <div class="stat"><div class="k" id="todayEstimatedLabel">今日預估收入</div><div class="v tnum" id="todayEstimated">$0</div></div>
     <div class="stat"><div class="k">已記錄天數</div><div class="v tnum" id="dayCount">0</div></div>
   </div>
 
@@ -109,11 +110,11 @@
   </div>
 
   <div class="card">
-    <h2>568 平台對帳</h2>
-    <div class="field"><label>現金車資</label><div class="inputgrp"><input type="number" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
-    <div class="field"><label>線上支付車資</label><div class="inputgrp"><input type="number" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
-    <div class="subrow"><span class="lab">線上支付 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
-    <div class="subrow"><span class="lab">現金代扣 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
+    <h2>568 平台派單</h2>
+    <div class="field"><label>568 現金</label><div class="inputgrp"><input type="number" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
+    <div class="field"><label>568 綁定</label><div class="inputgrp"><input type="number" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
+    <div class="subrow"><span class="lab">568 綁定 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
+    <div class="subrow"><span class="lab">568 現金 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
     <div class="hero">
       <div class="k">預估銀行應入帳</div>
       <div class="v tnum" id="netOnline568">$0</div>
@@ -236,10 +237,17 @@
     document.getElementById('cut568Online').textContent = '-' + fmt(roundHalfAwayFromZero(online * 0.15));
     document.getElementById('cut568Cash').textContent = '-' + fmt(roundHalfAwayFromZero(cash * 0.15));
 
-    var total = cash + online + num('uber') + num('bolt') + num('yoxi') + num('direct') + num('other');
+    var otherPlatforms = num('uber') + num('bolt') + num('yoxi') + num('direct') + num('other');
+
+    var total = cash + online + otherPlatforms;
     document.getElementById('todayTotal').textContent = fmt(total);
     document.getElementById('todayStatLabel').textContent =
       (editingDate === todayKey()) ? '今日總收入' : (formatDateLabel(editingDate) + ' 總收入');
+
+    var estimated = cash + net + otherPlatforms;
+    document.getElementById('todayEstimated').textContent = fmt(estimated);
+    document.getElementById('todayEstimatedLabel').textContent =
+      (editingDate === todayKey()) ? '今日預估收入' : (formatDateLabel(editingDate) + ' 預估收入');
 
     var start = document.getElementById('startTime').value;
     var end = document.getElementById('endTime').value;
@@ -310,7 +318,7 @@
       item.className = 'hist-item';
       item.innerHTML =
         '<div class="d tnum">' + d.date.slice(5) + '</div>' +
-        '<div class="mid">' + timeLine + '<br>568現金 ' + fmt(cash) + ' · 線上 ' + fmt(online) + '<br>預估入帳 ' + fmt(net) + '</div>' +
+        '<div class="mid">' + timeLine + '<br>568現金 ' + fmt(cash) + ' · 568綁定 ' + fmt(online) + '<br>預估入帳 ' + fmt(net) + '</div>' +
         '<div class="amt tnum">' + fmt(total) + '</div>' +
         '<button class="edit" data-date="' + d.date + '" aria-label="編輯">✎</button>' +
         '<button class="del" data-date="' + d.date + '" aria-label="刪除">×</button>';

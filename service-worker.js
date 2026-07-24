@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taxi-ledger-v2';
+const CACHE_NAME = 'taxi-ledger-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -31,12 +31,12 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      return cached || fetch(event.request).then(function (response) {
-        var copy = response.clone();
-        caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
-        return response;
-      }).catch(function () { return cached; });
+    fetch(event.request).then(function (response) {
+      var copy = response.clone();
+      caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
+      return response;
+    }).catch(function () {
+      return caches.match(event.request);
     })
   );
 });
