@@ -85,6 +85,11 @@
   .update-banner span { font-size: 13px; font-weight: 700; }
   .update-banner button { background: var(--accent-ink); color: var(--accent); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 
+  .hint-box { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 12px; color: var(--ink-muted); line-height: 1.7; }
+  .hint-box b { color: var(--ink); }
+
+  .warn-box { background: var(--surface); border: 1.5px solid var(--expense); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 12px; color: var(--expense); font-weight: 700; line-height: 1.6; }
+
   .foot { text-align:center; font-size: 10px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
 </style>
 </head>
@@ -118,12 +123,18 @@
     </div>
   </div>
 
+  <div class="hint-box">
+    <b>怎麼輸入金額欄位</b><br>
+    第一次輸入(例如 Uber 收 100 元):直接點欄位打字就好。<br>
+    要累加(同一項目分好幾趟收的車資):先按「+」,輸入本趟金額,再按「✓」確認,系統會自動加總。
+  </div>
+
   <div class="card">
     <h2>568 平台派單</h2>
     <div class="field"><label>568 現金</label><div class="inputgrp"><input type="number" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
     <div class="field"><label>568 綁定</label><div class="inputgrp"><input type="number" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
-    <div class="subrow"><span class="lab">568 綁定 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
     <div class="subrow"><span class="lab">568 現金 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
+    <div class="subrow"><span class="lab">568 綁定 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
     <div class="hero">
       <div class="k">預估銀行應入帳</div>
       <div class="v tnum" id="netOnline568">$0</div>
@@ -137,6 +148,10 @@
     <div class="field"><label>yoxi</label><div class="inputgrp"><input type="number" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
     <div class="field"><label>直客</label><div class="inputgrp"><input type="number" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
     <div class="field"><label>其他</label><div class="inputgrp"><input type="number" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
+  </div>
+
+  <div class="warn-box">
+    ⚠ 沒有自動存檔:不管是直接打字還是用「+」累加,都要按下面「儲存今天」才會真的存進去。沒按就離開頁面,資料會遺失。
   </div>
 
   <button class="btn" id="saveBtn">儲存今天</button>
