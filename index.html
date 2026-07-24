@@ -81,10 +81,19 @@
   .edit-banner { display: none; align-items: center; justify-content: space-between; background: var(--surface-alt); border: 1px solid var(--pending); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .edit-banner span { font-size: 13px; font-weight: 700; color: var(--pending); }
 
+  .update-banner { display: none; align-items: center; justify-content: space-between; gap: 10px; background: var(--accent); color: var(--accent-ink); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; position: sticky; top: 8px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .update-banner span { font-size: 13px; font-weight: 700; }
+  .update-banner button { background: var(--accent-ink); color: var(--accent); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+
   .foot { text-align:center; font-size: 10px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
 </style>
 </head>
 <body>
+  <div class="update-banner" id="updateBanner">
+    <span>有新版本可用</span>
+    <button type="button" id="updateReloadBtn">立即更新</button>
+  </div>
+
   <h1>記帳本</h1>
   <p class="sub">今日輸入 · 資料只存在這支裝置</p>
 
@@ -361,7 +370,19 @@
   renderHistory();
 
   if ('serviceWorker' in navigator) {
+    var swHadControllerAtLoad = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.register('service-worker.js').catch(function () {});
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      // Only a genuine update replaces an already-active controller;
+      // the very first install also fires this event and must not show the banner.
+      if (swHadControllerAtLoad) {
+        document.getElementById('updateBanner').style.display = 'flex';
+      }
+      swHadControllerAtLoad = true;
+    });
+    document.getElementById('updateReloadBtn').addEventListener('click', function () {
+      window.location.reload();
+    });
   }
 })();
 </script>
