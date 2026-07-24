@@ -41,6 +41,11 @@
   .field input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .field input[type="time"] { width: 120px; }
 
+  .inputgrp { display: flex; align-items: center; gap: 6px; }
+  .inputgrp input { width: 100px; }
+  .addbtn { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--accent); font-size: 18px; font-weight: 700; line-height: 1; cursor: pointer; }
+  .addbtn.confirm { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
   .subrow { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 6px 0; }
   .subrow .lab { color: var(--ink-muted); }
   .subrow .amt { color: var(--expense); font-weight: 700; }
@@ -68,8 +73,13 @@
   .hist-item .d { font-size: 13px; font-weight: 700; width: 70px; flex-shrink:0; }
   .hist-item .mid { flex: 1; font-size: 11px; color: var(--ink-muted); line-height: 1.5; }
   .hist-item .amt { font-size: 14px; font-weight: 700; text-align: right; }
-  .hist-item .del { background:none; border:none; color: var(--expense); font-size: 18px; padding: 4px 6px; cursor: pointer; line-height:1; }
+  .hist-item .del, .hist-item .edit { background:none; border:none; font-size: 16px; padding: 4px 6px; cursor: pointer; line-height:1; }
+  .hist-item .del { color: var(--expense); font-size: 18px; }
+  .hist-item .edit { color: var(--ink-muted); }
   .empty { text-align: center; font-size: 12px; color: var(--ink-muted); padding: 12px 0; }
+
+  .edit-banner { display: none; align-items: center; justify-content: space-between; background: var(--surface-alt); border: 1px solid var(--pending); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
+  .edit-banner span { font-size: 13px; font-weight: 700; color: var(--pending); }
 
   .foot { text-align:center; font-size: 10px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
 </style>
@@ -78,8 +88,13 @@
   <h1>記帳本</h1>
   <p class="sub">今日輸入 · 資料只存在這支裝置</p>
 
+  <div class="edit-banner" id="editBanner">
+    <span id="editingDateLabel"></span>
+    <button class="btn small ghost" id="backToToday">回到今天</button>
+  </div>
+
   <div class="stats">
-    <div class="stat"><div class="k">今日總收入</div><div class="v tnum" id="todayTotal">$0</div></div>
+    <div class="stat"><div class="k" id="todayStatLabel">今日總收入</div><div class="v tnum" id="todayTotal">$0</div></div>
     <div class="stat"><div class="k">已記錄天數</div><div class="v tnum" id="dayCount">0</div></div>
   </div>
 
@@ -95,8 +110,8 @@
 
   <div class="card">
     <h2>568 平台對帳</h2>
-    <div class="field"><label>現金車資</label><input type="number" inputmode="decimal" id="cash568" placeholder="0"></div>
-    <div class="field"><label>線上支付車資</label><input type="number" inputmode="decimal" id="online568" placeholder="0"></div>
+    <div class="field"><label>現金車資</label><div class="inputgrp"><input type="number" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
+    <div class="field"><label>線上支付車資</label><div class="inputgrp"><input type="number" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
     <div class="subrow"><span class="lab">線上支付 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
     <div class="subrow"><span class="lab">現金代扣 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
     <div class="hero">
@@ -107,11 +122,11 @@
 
   <div class="card">
     <h2>其他平台</h2>
-    <div class="field"><label>Uber</label><input type="number" inputmode="decimal" id="uber" placeholder="0"></div>
-    <div class="field"><label>Bolt</label><input type="number" inputmode="decimal" id="bolt" placeholder="0"></div>
-    <div class="field"><label>yoxi</label><input type="number" inputmode="decimal" id="yoxi" placeholder="0"></div>
-    <div class="field"><label>直客</label><input type="number" inputmode="decimal" id="direct" placeholder="0"></div>
-    <div class="field"><label>其他</label><input type="number" inputmode="decimal" id="other" placeholder="0"></div>
+    <div class="field"><label>Uber</label><div class="inputgrp"><input type="number" inputmode="decimal" id="uber" placeholder="0"><button type="button" class="addbtn" data-target="uber">+</button></div></div>
+    <div class="field"><label>Bolt</label><div class="inputgrp"><input type="number" inputmode="decimal" id="bolt" placeholder="0"><button type="button" class="addbtn" data-target="bolt">+</button></div></div>
+    <div class="field"><label>yoxi</label><div class="inputgrp"><input type="number" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
+    <div class="field"><label>直客</label><div class="inputgrp"><input type="number" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
+    <div class="field"><label>其他</label><div class="inputgrp"><input type="number" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
   </div>
 
   <button class="btn" id="saveBtn">儲存今天</button>
@@ -150,6 +165,44 @@
     return isNaN(v) ? 0 : v;
   }
 
+  var addPending = {}; // id -> total before this increment, while in add-mode
+
+  function toggleAddMode(id) {
+    var input = document.getElementById(id);
+    var btn = document.querySelector('.addbtn[data-target="' + id + '"]');
+    if (addPending.hasOwnProperty(id)) {
+      var inc = parseFloat(input.value);
+      if (isNaN(inc)) inc = 0;
+      var newTotal = addPending[id] + inc;
+      input.value = newTotal || '';
+      input.placeholder = '0';
+      delete addPending[id];
+      btn.textContent = '+';
+      btn.classList.remove('confirm');
+      updateLiveCalc();
+    } else {
+      addPending[id] = num(id);
+      input.value = '';
+      input.placeholder = '輸入本趟金額';
+      input.focus();
+      btn.textContent = '✓';
+      btn.classList.add('confirm');
+    }
+  }
+
+  function confirmPendingAdds() {
+    Object.keys(addPending).forEach(function (id) { toggleAddMode(id); });
+  }
+
+  function resetAddModes() {
+    Object.keys(addPending).forEach(function (id) {
+      var btn = document.querySelector('.addbtn[data-target="' + id + '"]');
+      if (btn) { btn.textContent = '+'; btn.classList.remove('confirm'); }
+      document.getElementById(id).placeholder = '0';
+    });
+    addPending = {};
+  }
+
   function roundHalfAwayFromZero(n) {
     return n < 0 ? -Math.round(-n) : Math.round(n);
   }
@@ -185,6 +238,8 @@
 
     var total = cash + online + num('uber') + num('bolt') + num('yoxi') + num('direct') + num('other');
     document.getElementById('todayTotal').textContent = fmt(total);
+    document.getElementById('todayStatLabel').textContent =
+      (editingDate === todayKey()) ? '今日總收入' : (formatDateLabel(editingDate) + ' 總收入');
 
     var start = document.getElementById('startTime').value;
     var end = document.getElementById('endTime').value;
@@ -193,23 +248,48 @@
 
   ids.forEach(function (id) {
     document.getElementById(id).addEventListener('input', updateLiveCalc);
+    document.querySelector('.addbtn[data-target="' + id + '"]').addEventListener('click', function () {
+      toggleAddMode(id);
+    });
   });
   ['startTime', 'endTime'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', updateLiveCalc);
   });
 
-  function loadTodayIntoForm() {
-    var days = loadDays();
-    var today = days.find(function (d) { return d.date === todayKey(); });
-    if (today) {
-      ids.forEach(function (id) {
-        document.getElementById(id).value = today[id] || '';
-      });
-      document.getElementById('startTime').value = today.startTime || '';
-      document.getElementById('endTime').value = today.endTime || '';
+  function formatDateLabel(dateStr) {
+    var parts = dateStr.split('-');
+    return parseInt(parts[1], 10) + '/' + parseInt(parts[2], 10);
+  }
+
+  var editingDate = todayKey();
+
+  function updateEditBanner() {
+    var banner = document.getElementById('editBanner');
+    var isToday = editingDate === todayKey();
+    banner.style.display = isToday ? 'none' : 'flex';
+    if (!isToday) {
+      document.getElementById('editingDateLabel').textContent = '正在編輯 ' + formatDateLabel(editingDate);
     }
+    document.getElementById('saveBtn').textContent = isToday ? '儲存今天' : ('儲存 ' + formatDateLabel(editingDate));
+  }
+
+  function loadDateIntoForm(date) {
+    resetAddModes();
+    var days = loadDays();
+    var entry = days.find(function (d) { return d.date === date; });
+    ids.forEach(function (id) {
+      document.getElementById(id).value = entry ? (entry[id] || '') : '';
+    });
+    document.getElementById('startTime').value = entry ? (entry.startTime || '') : '';
+    document.getElementById('endTime').value = entry ? (entry.endTime || '') : '';
+    editingDate = date;
+    updateEditBanner();
     updateLiveCalc();
   }
+
+  document.getElementById('backToToday').addEventListener('click', function () {
+    loadDateIntoForm(todayKey());
+  });
 
   function renderHistory() {
     var days = loadDays().slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });
@@ -232,8 +312,15 @@
         '<div class="d tnum">' + d.date.slice(5) + '</div>' +
         '<div class="mid">' + timeLine + '<br>568現金 ' + fmt(cash) + ' · 線上 ' + fmt(online) + '<br>預估入帳 ' + fmt(net) + '</div>' +
         '<div class="amt tnum">' + fmt(total) + '</div>' +
+        '<button class="edit" data-date="' + d.date + '" aria-label="編輯">✎</button>' +
         '<button class="del" data-date="' + d.date + '" aria-label="刪除">×</button>';
       container.appendChild(item);
+    });
+    container.querySelectorAll('.edit').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        loadDateIntoForm(btn.getAttribute('data-date'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     });
     container.querySelectorAll('.del').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -242,13 +329,14 @@
         var days = loadDays().filter(function (d) { return d.date !== date; });
         saveDays(days);
         renderHistory();
-        if (date === todayKey()) loadTodayIntoForm();
+        if (date === editingDate) loadDateIntoForm(todayKey());
       });
     });
   }
 
   document.getElementById('saveBtn').addEventListener('click', function () {
-    var entry = { date: todayKey(), savedAt: new Date().toISOString() };
+    confirmPendingAdds();
+    var entry = { date: editingDate, savedAt: new Date().toISOString() };
     ids.forEach(function (id) { entry[id] = num(id); });
     entry.startTime = document.getElementById('startTime').value;
     entry.endTime = document.getElementById('endTime').value;
@@ -261,7 +349,7 @@
     setTimeout(function () { msg.textContent = ''; }, 2500);
   });
 
-  loadTodayIntoForm();
+  loadDateIntoForm(todayKey());
   renderHistory();
 
   if ('serviceWorker' in navigator) {
