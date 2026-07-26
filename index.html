@@ -115,6 +115,12 @@
   .stats-delta.pos { color: var(--income); }
   .stats-delta.neg { color: var(--expense); }
 
+  .yoy-nav { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 6px; }
+  .cal-nav.small { width: 24px; height: 24px; font-size: 14px; }
+  .yoy-label-btn { position: relative; display: inline-block; cursor: pointer; }
+  .yoy-label-btn .yoy-label { text-decoration: underline dotted; text-underline-offset: 3px; }
+  .yoy-label-btn .jump-overlay { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; padding: 0; margin: 0; cursor: pointer; }
+
   .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--surface); border-top: 1px solid var(--border); padding: 6px max(16px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); z-index: 20; max-width: 480px; margin: 0 auto; }
   .tab-btn { flex: 1; background: none; border: none; padding: 10px 4px; font-size: 12px; font-weight: 700; color: var(--ink-muted); cursor: pointer; border-radius: 10px; }
   .tab-btn.active { color: var(--accent); background: var(--surface-alt); }
@@ -174,18 +180,13 @@
       </div>
     </div>
 
-    <div class="hint-box">
-      <b>怎麼輸入金額欄位</b><br>
-      第一次輸入(例如 Uber 收 100 元):直接點欄位打字就好。<br>
-      要累加(同一項目分好幾趟收的車資):先按「+」,輸入本趟金額,再按「✓」確認,系統會自動加總。
-    </div>
-
     <div class="card">
       <h2>568 平台派單</h2>
-      <div class="field"><label id="label-cash568">568 現金</label><div class="inputgrp"><input type="number" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
-      <div class="field"><label id="label-online568">568 綁定</label><div class="inputgrp"><input type="number" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
+      <div class="field"><label id="label-cash568">568 現金</label><div class="inputgrp"><input type="text" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
+      <div class="field"><label id="label-online568">568 綁定</label><div class="inputgrp"><input type="text" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
       <div class="subrow"><span class="lab" id="label-cut-cash568">568 現金 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
       <div class="subrow"><span class="lab" id="label-cut-online568">568 綁定 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
+      <div class="subrow"><span class="lab">15% 合計</span><span class="amt tnum" id="cut568Total">-$0</span></div>
       <div class="hero">
         <div class="k">預估銀行應入帳</div>
         <div class="v tnum" id="netOnline568">$0</div>
@@ -194,11 +195,11 @@
 
     <div class="card">
       <h2>其他平台</h2>
-      <div class="field"><label id="label-uber">Uber</label><div class="inputgrp"><input type="number" inputmode="decimal" id="uber" placeholder="0"><button type="button" class="addbtn" data-target="uber">+</button></div></div>
-      <div class="field"><label id="label-bolt">Bolt</label><div class="inputgrp"><input type="number" inputmode="decimal" id="bolt" placeholder="0"><button type="button" class="addbtn" data-target="bolt">+</button></div></div>
-      <div class="field"><label id="label-yoxi">yoxi</label><div class="inputgrp"><input type="number" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
-      <div class="field"><label id="label-direct">直客</label><div class="inputgrp"><input type="number" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
-      <div class="field"><label id="label-other">其他</label><div class="inputgrp"><input type="number" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
+      <div class="field"><label id="label-uber">Uber</label><div class="inputgrp"><input type="text" inputmode="decimal" id="uber" placeholder="0"><button type="button" class="addbtn" data-target="uber">+</button></div></div>
+      <div class="field"><label id="label-bolt">Bolt</label><div class="inputgrp"><input type="text" inputmode="decimal" id="bolt" placeholder="0"><button type="button" class="addbtn" data-target="bolt">+</button></div></div>
+      <div class="field"><label id="label-yoxi">yoxi</label><div class="inputgrp"><input type="text" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
+      <div class="field"><label id="label-direct">直客</label><div class="inputgrp"><input type="text" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
+      <div class="field"><label id="label-other">其他</label><div class="inputgrp"><input type="text" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
     </div>
 
     <div class="warn-box">
@@ -233,19 +234,21 @@
         <button type="button" class="seg-btn" data-gran="month">月</button>
         <button type="button" class="seg-btn" data-gran="year">年</button>
       </div>
-      <div class="cal-topbar" style="margin-top:12px;">
-        <button type="button" class="cal-nav" id="statsPrevBtn" aria-label="上一期">‹</button>
-        <span class="cal-month-label" id="statsPeriodLabel"></span>
-        <button type="button" class="cal-nav" id="statsNextBtn" aria-label="下一期">›</button>
-      </div>
-      <div class="yoy-row">
+      <div class="yoy-row" style="margin-top:12px;">
         <div class="yoy-col">
           <div class="yoy-label" id="statsCurLabel"></div>
           <div class="yoy-value tnum" id="statsCurTotal">$0</div>
         </div>
         <div class="yoy-col">
-          <div class="yoy-label" id="statsPrevLabel"></div>
-          <div class="yoy-value tnum" id="statsPrevTotal">$0</div>
+          <div class="yoy-nav">
+            <button type="button" class="cal-nav small" id="statsCmpPrevBtn" aria-label="對照上一期">‹</button>
+            <label class="yoy-label-btn" for="statsCmpJumpDate">
+              <span class="yoy-label" id="statsCmpLabel"></span>
+              <input type="date" id="statsCmpJumpDate" class="jump-overlay" aria-label="跳到指定週/月/年">
+            </label>
+            <button type="button" class="cal-nav small" id="statsCmpNextBtn" aria-label="對照下一期">›</button>
+          </div>
+          <div class="yoy-value tnum" id="statsCmpTotal">$0</div>
         </div>
       </div>
       <p class="stats-delta" id="statsDelta"></p>
@@ -397,8 +400,11 @@
     el.textContent = fmt(net);
     el.className = 'v tnum ' + (net < 0 ? 'neg' : 'pos');
 
-    document.getElementById('cut568Online').textContent = '-' + fmt(roundHalfAwayFromZero(online * 0.15));
-    document.getElementById('cut568Cash').textContent = '-' + fmt(roundHalfAwayFromZero(cash * 0.15));
+    var cutOnline = roundHalfAwayFromZero(online * 0.15);
+    var cutCash = roundHalfAwayFromZero(cash * 0.15);
+    document.getElementById('cut568Online').textContent = '-' + fmt(cutOnline);
+    document.getElementById('cut568Cash').textContent = '-' + fmt(cutCash);
+    document.getElementById('cut568Total').textContent = '-' + fmt(cutOnline + cutCash);
 
     var otherPlatforms = num('uber') + num('bolt') + num('yoxi') + num('direct') + num('other');
 
@@ -425,7 +431,19 @@
   }
 
   ids.forEach(function (id) {
-    document.getElementById(id).addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); });
+    var el = document.getElementById(id);
+    el.addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); });
+    el.addEventListener('focus', function () {
+      // 點進欄位就整格選取,直接打字會覆蓋舊數字,不用自己刪
+      var input = this;
+      setTimeout(function () { input.select(); }, 0);
+    });
+    el.addEventListener('mouseup', function (e) {
+      // 手機點擊時,瀏覽器預設會把游標放在點到的字元位置、蓋掉上面 focus 選取的效果
+      // 這裡在 mouseup(觸控裝置會模擬出這個事件)擋掉預設動作,確保整格維持選取狀態
+      e.preventDefault();
+      this.select();
+    });
     document.querySelector('.addbtn[data-target="' + id + '"]').addEventListener('click', function () {
       clearSavedFeedback();
       toggleAddMode(id);
@@ -615,9 +633,9 @@
     btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
   });
 
-  // ---- 收入總覽(週/月/年 + 去年同期比較) ----
+  // ---- 收入總覽(週/月/年,左邊固定本期,右邊自由對照) ----
   var statsGranularity = 'week';
-  var statsRefDate = new Date();
+  var statsCmpRefDate = defaultCmpRefDate(statsGranularity); // 對照格自己的導覽位置,預設「上一期」
 
   function getWeekRange(date) {
     var day = date.getDay(); // 0=Sun..6=Sat
@@ -643,25 +661,11 @@
     if (gran === 'month') return getMonthRange(refDate);
     return getYearRange(refDate);
   }
-  function computeLastYearRange(gran, range) {
-    if (gran === 'week') {
-      // 用「年份−1、月/日不變」對齊去年同一組日期,不要用天數位移
-      // (平年 365 天不是 364 天,固定減 364 天會累積誤差、對不準)
-      return {
-        start: new Date(range.start.getFullYear() - 1, range.start.getMonth(), range.start.getDate()),
-        end: new Date(range.end.getFullYear() - 1, range.end.getMonth(), range.end.getDate())
-      };
-    }
-    if (gran === 'month') {
-      return {
-        start: new Date(range.start.getFullYear() - 1, range.start.getMonth(), 1),
-        end: new Date(range.start.getFullYear() - 1, range.start.getMonth() + 1, 0)
-      };
-    }
-    return {
-      start: new Date(range.start.getFullYear() - 1, 0, 1),
-      end: new Date(range.start.getFullYear() - 1, 11, 31)
-    };
+  function defaultCmpRefDate(gran) {
+    var now = new Date();
+    if (gran === 'week') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+    if (gran === 'month') return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return new Date(now.getFullYear() - 1, 0, 1);
   }
   function formatMD(date) { return (date.getMonth() + 1) + '/' + date.getDate(); }
   function formatRangeLabel(gran, range) {
@@ -677,31 +681,31 @@
     });
     return sum;
   }
-  function isAtLatestPeriod() {
-    var range = computeRange(statsGranularity, statsRefDate);
+  function isCmpAtLatestPeriod() {
+    var range = computeRange(statsGranularity, statsCmpRefDate);
     return formatDateStr(range.end) >= todayKey();
   }
 
   function renderStats() {
     var days = loadDays();
-    var range = computeRange(statsGranularity, statsRefDate);
-    var lastYearRange = computeLastYearRange(statsGranularity, range);
-    var curSum = sumIncomeInRange(days, range.start, range.end);
-    var prevSum = sumIncomeInRange(days, lastYearRange.start, lastYearRange.end);
-    var delta = curSum - prevSum;
+    var curRange = computeRange(statsGranularity, new Date()); // 左邊固定「本期」,不受對照格導覽影響
+    var cmpRange = computeRange(statsGranularity, statsCmpRefDate);
+    var curSum = sumIncomeInRange(days, curRange.start, curRange.end);
+    var cmpSum = sumIncomeInRange(days, cmpRange.start, cmpRange.end);
+    var delta = curSum - cmpSum;
 
-    document.getElementById('statsPeriodLabel').textContent = formatRangeLabel(statsGranularity, range);
-    document.getElementById('statsCurLabel').textContent = formatRangeLabel(statsGranularity, range);
+    document.getElementById('statsCurLabel').textContent = formatRangeLabel(statsGranularity, curRange);
     document.getElementById('statsCurTotal').textContent = fmt(curSum);
-    document.getElementById('statsPrevLabel').textContent = formatRangeLabel(statsGranularity, lastYearRange);
-    document.getElementById('statsPrevTotal').textContent = fmt(prevSum);
+    document.getElementById('statsCmpLabel').textContent = formatRangeLabel(statsGranularity, cmpRange);
+    document.getElementById('statsCmpTotal').textContent = fmt(cmpSum);
+    document.getElementById('statsCmpJumpDate').value = formatDateStr(cmpRange.start);
 
     var deltaEl = document.getElementById('statsDelta');
     if (delta === 0) {
-      deltaEl.textContent = '跟去年同期打平';
+      deltaEl.textContent = '兩期打平';
       deltaEl.className = 'stats-delta';
     } else {
-      deltaEl.textContent = '比去年同期' + (delta > 0 ? '多賺 ' : '少賺 ') + fmt(Math.abs(delta));
+      deltaEl.textContent = '比對照期間' + (delta > 0 ? '多賺 ' : '少賺 ') + fmt(Math.abs(delta));
       deltaEl.className = 'stats-delta ' + (delta > 0 ? 'pos' : 'neg');
     }
   }
@@ -711,21 +715,31 @@
       document.querySelectorAll('.seg-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       statsGranularity = btn.getAttribute('data-gran');
-      statsRefDate = new Date();
+      statsCmpRefDate = defaultCmpRefDate(statsGranularity);
       renderStats();
     });
   });
-  document.getElementById('statsPrevBtn').addEventListener('click', function () {
-    if (statsGranularity === 'week') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth(), statsRefDate.getDate() - 7);
-    else if (statsGranularity === 'month') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth() - 1, 1);
-    else statsRefDate = new Date(statsRefDate.getFullYear() - 1, 0, 1);
+  document.getElementById('statsCmpPrevBtn').addEventListener('click', function () {
+    if (statsGranularity === 'week') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth(), statsCmpRefDate.getDate() - 7);
+    else if (statsGranularity === 'month') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth() - 1, 1);
+    else statsCmpRefDate = new Date(statsCmpRefDate.getFullYear() - 1, 0, 1);
     renderStats();
   });
-  document.getElementById('statsNextBtn').addEventListener('click', function () {
-    if (isAtLatestPeriod()) return;
-    if (statsGranularity === 'week') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth(), statsRefDate.getDate() + 7);
-    else if (statsGranularity === 'month') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth() + 1, 1);
-    else statsRefDate = new Date(statsRefDate.getFullYear() + 1, 0, 1);
+  document.getElementById('statsCmpNextBtn').addEventListener('click', function () {
+    if (isCmpAtLatestPeriod()) return;
+    if (statsGranularity === 'week') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth(), statsCmpRefDate.getDate() + 7);
+    else if (statsGranularity === 'month') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth() + 1, 1);
+    else statsCmpRefDate = new Date(statsCmpRefDate.getFullYear() + 1, 0, 1);
+    renderStats();
+  });
+  var statsCmpJumpDate = document.getElementById('statsCmpJumpDate');
+  statsCmpJumpDate.max = todayKey();
+  statsCmpJumpDate.addEventListener('change', function () {
+    var v = this.value;
+    if (!v) return;
+    var parts = v.split('-');
+    // 不管目前是週/月/年哪個粒度,選到的這個日期落在哪個週期,就跳去那個週期
+    statsCmpRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     renderStats();
   });
 
