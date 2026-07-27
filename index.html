@@ -51,6 +51,10 @@
   .punch-time-col input { border: none; background: transparent; padding: 0; width: auto; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
   .btn.punch-active { background: var(--pending); }
 
+  .recon-field { margin-bottom: 10px; }
+  .recon-field label { display: block; font-size: 13px; color: var(--ink-muted); font-weight: 600; margin-bottom: 4px; }
+  .recon-field input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); font-variant-numeric: tabular-nums; }
+
   details.recon-month { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
   details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; }
   details.recon-month > summary::-webkit-details-marker { display: none; }
@@ -327,10 +331,8 @@
 
     <div class="card">
       <h2 id="reconFormTitle">新增銀行入帳</h2>
-      <div class="punch-times">
-        <div class="punch-time-col"><span class="punch-time-label">金額</span><input type="text" inputmode="decimal" id="reconAmount" placeholder="0"></div>
-        <div class="punch-time-col"><span class="punch-time-label">日期</span><input type="date" id="reconDate"></div>
-      </div>
+      <div class="recon-field"><label for="reconAmount">金額</label><input type="text" inputmode="decimal" id="reconAmount" placeholder="0"></div>
+      <div class="recon-field"><label for="reconDate">日期</label><input type="date" id="reconDate"></div>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button type="button" class="btn" id="reconSaveBtn" style="flex:1">儲存這筆入帳</button>
         <button type="button" class="btn ghost small" id="reconDeleteBtn" style="display:none;">刪除</button>
