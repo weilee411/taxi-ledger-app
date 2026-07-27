@@ -195,6 +195,16 @@
       <button type="button" class="btn ghost small" id="settingsCancelBtn" style="flex:1">取消</button>
       <button type="button" class="btn small" id="settingsSaveBtn" style="flex:1">儲存名稱</button>
     </div>
+
+    <div style="border-top:1px solid var(--border); margin:16px 0 0; padding-top:14px;">
+      <h2>資料備份</h2>
+      <p class="settings-hint">匯出一個檔案存到 iCloud Drive / Google Drive,換裝置或需要還原時用「匯入備份」讀回來。匯入是合併(照日期蓋掉同一天),不會清空其他資料。</p>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn ghost small" id="exportBtn" style="flex:1">匯出備份</button>
+        <button type="button" class="btn ghost small" id="importBtn" style="flex:1">匯入備份</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
   </div>
 
   <div id="tab-today">
@@ -1134,6 +1144,60 @@
     renderDepositList();
     renderReconAccordion(rows);
   }
+
+  // ---- 資料備份(匯出/匯入,合併不覆蓋) ----
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    var data = {};
+    data[STORAGE_KEY] = loadDays();
+    data[LABELS_KEY] = loadLabels();
+    data[RECON_KEY] = loadDeposits();
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'taxi-ledger-backup-' + todayKey() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', function () {
+    document.getElementById('importFile').click();
+  });
+
+  document.getElementById('importFile').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        var importedDays = 0;
+        if (Array.isArray(data[STORAGE_KEY])) {
+          var byDate = {};
+          loadDays().forEach(function (d) { byDate[d.date] = d; });
+          data[STORAGE_KEY].forEach(function (d) { byDate[d.date] = d; importedDays++; });
+          saveDays(Object.keys(byDate).map(function (k) { return byDate[k]; }));
+        }
+        if (Array.isArray(data[RECON_KEY])) {
+          var byId = {};
+          loadDeposits().forEach(function (d) { byId[d.id] = d; });
+          data[RECON_KEY].forEach(function (d) { byId[d.id] = d; });
+          saveDepositsList(Object.keys(byId).map(function (k) { return byId[k]; }));
+        }
+        if (data[LABELS_KEY]) { saveLabels(data[LABELS_KEY]); }
+        applyLabels();
+        loadDateIntoForm(editingDate);
+        renderCalendar();
+        alert('匯入完成,共匯入/更新 ' + importedDays + ' 天的紀錄');
+      } catch (err) {
+        alert('這個檔案讀不出來,確認一下是不是正確的備份檔');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
 
   applyLabels();
   loadDateIntoForm(todayKey());
