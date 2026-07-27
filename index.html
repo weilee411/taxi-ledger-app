@@ -48,8 +48,28 @@
   .punch-times { display: flex; gap: 8px; margin: 10px 0; }
   .punch-time-col { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
   .punch-time-label { font-size: 13px; color: var(--ink-muted); font-weight: 600; }
-  .punch-time-col input[type="time"] { border: none; background: transparent; padding: 0; width: auto; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .punch-time-col input { border: none; background: transparent; padding: 0; width: auto; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
   .btn.punch-active { background: var(--pending); }
+
+  details.recon-month { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+  details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; }
+  details.recon-month > summary::-webkit-details-marker { display: none; }
+  details.recon-month > summary .chev { color: var(--ink-muted); font-size: 13px; transition: transform .15s ease; }
+  details.recon-month[open] > summary .chev { transform: rotate(180deg); }
+  .recon-mini-stats { display: flex; gap: 14px; padding: 0 16px 12px; font-size: 13px; color: var(--ink-muted); flex-wrap: wrap; }
+  .recon-mini-stats b { color: var(--ink); font-weight: 700; }
+  details.recon-week { border-top: 1px solid var(--border); }
+  details.recon-week > summary { list-style: none; cursor: pointer; padding: 10px 16px; font-size: 14px; font-weight: 700; background: var(--surface-alt); display: flex; justify-content: space-between; align-items: center; }
+  details.recon-week > summary::-webkit-details-marker { display: none; }
+  details.recon-week > summary .chev { color: var(--ink-muted); font-size: 13px; transition: transform .15s ease; }
+  details.recon-week[open] > summary .chev { transform: rotate(180deg); }
+  details.recon-week .recon-mini-stats { background: var(--surface-alt); padding-top: 2px; }
+  .recon-day-list { padding: 4px 16px 10px; }
+  .recon-day-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .recon-day-row:last-child { border-bottom: none; }
+  .recon-day-date { width: 52px; color: var(--ink-muted); flex-shrink: 0; }
+  .recon-day-col { flex: 1; text-align: right; color: var(--ink-muted); }
+  .recon-day-col.strong { color: var(--ink); font-weight: 700; }
 
   .inputgrp { display: flex; align-items: center; gap: 6px; }
   .inputgrp input { width: 100px; }
@@ -285,12 +305,46 @@
     </div>
   </div>
 
-  <p class="foot">記帳本 v3 · 今日輸入 / 歷史 / 統計<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
+  <div id="tab-recon" style="display:none">
+    <div class="card">
+      <h2>568 對帳</h2>
+      <p class="settings-hint">逐日累加,不配對——應收金額自動從「568 派單卡」帶入,只需要記銀行實際入帳。</p>
+      <div class="hero">
+        <div class="k">未收金額</div>
+        <div class="v tnum" id="reconOutstanding">$0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="reconFormTitle">新增銀行入帳</h2>
+      <div class="punch-times">
+        <div class="punch-time-col"><span class="punch-time-label">金額</span><input type="text" inputmode="decimal" id="reconAmount" placeholder="0"></div>
+        <div class="punch-time-col"><span class="punch-time-label">日期</span><input type="date" id="reconDate"></div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" id="reconSaveBtn" style="flex:1">儲存這筆入帳</button>
+        <button type="button" class="btn ghost small" id="reconDeleteBtn" style="display:none;">刪除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>入帳紀錄</h2>
+      <div id="reconDepositList"><p class="empty">還沒有記錄</p></div>
+    </div>
+
+    <div class="card">
+      <h2>對帳明細</h2>
+      <div id="reconAccordion"><p class="empty">還沒有資料</p></div>
+    </div>
+  </div>
+
+  <p class="foot">記帳本 v3 · 今日輸入 / 歷史 / 統計 / 對帳<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
 
   <div class="tabbar" id="tabbar">
     <button type="button" class="tab-btn active" data-tab="today">今日輸入</button>
     <button type="button" class="tab-btn" data-tab="history">歷史</button>
     <button type="button" class="tab-btn" data-tab="stats">統計</button>
+    <button type="button" class="tab-btn" data-tab="recon">對帳</button>
   </div>
 
 <script>
@@ -726,7 +780,7 @@
   var currentTab = 'today';
   function switchTab(tab) {
     currentTab = tab;
-    ['today', 'history', 'stats'].forEach(function (t) {
+    ['today', 'history', 'stats', 'recon'].forEach(function (t) {
       document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -734,6 +788,7 @@
     });
     if (tab === 'history') renderCalendar();
     if (tab === 'stats') renderStats();
+    if (tab === 'recon') { resetReconForm(); renderRecon(); }
     window.scrollTo({ top: 0, behavior: 'instant' in window.scrollTo ? 'instant' : 'auto' });
   }
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -881,6 +936,204 @@
     statsCmpRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     renderStats();
   });
+
+  // ---- 568 對帳(逐日累加,不配對) ----
+  var RECON_KEY = 'taxiLedgerBankDeposits568';
+  var editingDepositId = null;
+
+  function loadDeposits() {
+    try {
+      var raw = localStorage.getItem(RECON_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveDepositsList(arr) {
+    localStorage.setItem(RECON_KEY, JSON.stringify(arr));
+  }
+
+  function resetReconForm() {
+    editingDepositId = null;
+    document.getElementById('reconAmount').value = '';
+    document.getElementById('reconDate').value = todayKey();
+    document.getElementById('reconFormTitle').textContent = '新增銀行入帳';
+    document.getElementById('reconSaveBtn').textContent = '儲存這筆入帳';
+    document.getElementById('reconDeleteBtn').style.display = 'none';
+  }
+
+  function loadDepositIntoForm(dep) {
+    editingDepositId = dep.id;
+    document.getElementById('reconAmount').value = dep.amount;
+    document.getElementById('reconDate').value = dep.date;
+    document.getElementById('reconFormTitle').textContent = '編輯這筆入帳';
+    document.getElementById('reconSaveBtn').textContent = '更新這筆入帳';
+    document.getElementById('reconDeleteBtn').style.display = 'block';
+  }
+
+  document.getElementById('reconSaveBtn').addEventListener('click', function () {
+    var amount = parseFloat(document.getElementById('reconAmount').value);
+    var date = document.getElementById('reconDate').value;
+    if (isNaN(amount) || !date) { alert('請輸入金額跟日期'); return; }
+    var deposits = loadDeposits();
+    if (editingDepositId) {
+      deposits = deposits.map(function (d) {
+        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date } : d;
+      });
+    } else {
+      deposits.push({ id: 'd' + Date.now(), amount: amount, date: date });
+    }
+    saveDepositsList(deposits);
+    resetReconForm();
+    renderRecon();
+  });
+
+  document.getElementById('reconDeleteBtn').addEventListener('click', function () {
+    if (!editingDepositId) return;
+    if (!confirm('刪除這筆入帳紀錄?')) return;
+    var deposits = loadDeposits().filter(function (d) { return d.id !== editingDepositId; });
+    saveDepositsList(deposits);
+    resetReconForm();
+    renderRecon();
+  });
+
+  function build568Estimates() {
+    var days = loadDays();
+    var map = {};
+    days.forEach(function (d) {
+      var c = d.cash568 || 0, o = d.online568 || 0;
+      if (c !== 0 || o !== 0) map[d.date] = calcNetOnline568(c, o);
+    });
+    return map;
+  }
+
+  function buildReconRows() {
+    var estMap = build568Estimates();
+    var deposits = loadDeposits();
+    var actualMap = {};
+    deposits.forEach(function (dep) { actualMap[dep.date] = (actualMap[dep.date] || 0) + (dep.amount || 0); });
+    var allDates = {};
+    Object.keys(estMap).forEach(function (d) { allDates[d] = true; });
+    Object.keys(actualMap).forEach(function (d) { allDates[d] = true; });
+    var dates = Object.keys(allDates).sort();
+    var cumulative = 0;
+    return dates.map(function (date) {
+      var est = estMap[date] || 0;
+      var act = actualMap[date] || 0;
+      cumulative += (est - act);
+      return { date: date, est: est, act: act, cumulative: cumulative };
+    });
+  }
+
+  function renderDepositList() {
+    var deposits = loadDeposits().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var container = document.getElementById('reconDepositList');
+    container.innerHTML = '';
+    if (!deposits.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
+    deposits.forEach(function (dep) {
+      var row = document.createElement('div');
+      row.className = 'recent-item';
+      row.innerHTML = '<span class="recent-date tnum">' + formatDateLabel(dep.date) + '</span><span class="recent-amt tnum">' + fmt(dep.amount) + '</span>';
+      row.addEventListener('click', function () {
+        loadDepositIntoForm(dep);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      container.appendChild(row);
+    });
+  }
+
+  function renderReconAccordion(rows) {
+    var container = document.getElementById('reconAccordion');
+    container.innerHTML = '';
+    if (!rows.length) {
+      container.innerHTML = '<p class="empty">還沒有資料——填「今日輸入」的 568 欄位或記一筆銀行入帳就會出現</p>';
+      return;
+    }
+
+    var months = {}; var monthOrder = [];
+    rows.forEach(function (row) {
+      var monthKey = row.date.slice(0, 7);
+      if (!months[monthKey]) { months[monthKey] = { weeks: {}, weekOrder: [], estSum: 0, actSum: 0, cumulativeEnd: 0 }; monthOrder.push(monthKey); }
+      var d = new Date(row.date + 'T00:00:00');
+      var wk = getWeekRange(d);
+      var weekKey = formatDateStr(wk.start);
+      var m = months[monthKey];
+      if (!m.weeks[weekKey]) { m.weeks[weekKey] = { start: wk.start, end: wk.end, days: [], estSum: 0, actSum: 0 }; m.weekOrder.push(weekKey); }
+      m.weeks[weekKey].days.push(row);
+      m.weeks[weekKey].estSum += row.est;
+      m.weeks[weekKey].actSum += row.act;
+      m.estSum += row.est;
+      m.actSum += row.act;
+      m.cumulativeEnd = row.cumulative;
+    });
+
+    var weekdayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+    for (var mi = monthOrder.length - 1; mi >= 0; mi--) {
+      var monthKey = monthOrder[mi];
+      var m = months[monthKey];
+      var monthParts = monthKey.split('-');
+      var monthLabel = monthParts[0] + '年' + parseInt(monthParts[1], 10) + '月';
+
+      var monthDetails = document.createElement('details');
+      monthDetails.className = 'recon-month';
+      if (mi === monthOrder.length - 1) monthDetails.open = true;
+
+      var monthSummary = document.createElement('summary');
+      monthSummary.innerHTML = '<span>' + monthLabel + '</span><span class="chev">▾</span>';
+      monthDetails.appendChild(monthSummary);
+
+      var monthStats = document.createElement('div');
+      monthStats.className = 'recon-mini-stats';
+      monthStats.innerHTML = '<span>應收 <b>' + fmt(m.estSum) + '</b></span><span>實收 <b>' + fmt(m.actSum) + '</b></span><span>未收 <b>' + fmt(m.cumulativeEnd) + '</b></span>';
+      monthDetails.appendChild(monthStats);
+
+      for (var wi = m.weekOrder.length - 1; wi >= 0; wi--) {
+        var weekKey = m.weekOrder[wi];
+        var w = m.weeks[weekKey];
+        var weekDetails = document.createElement('details');
+        weekDetails.className = 'recon-week';
+        if (mi === monthOrder.length - 1 && wi === m.weekOrder.length - 1) weekDetails.open = true;
+
+        var weekSummary = document.createElement('summary');
+        weekSummary.innerHTML = '<span>' + formatMD(w.start) + '～' + formatMD(w.end) + '</span><span class="chev">▾</span>';
+        weekDetails.appendChild(weekSummary);
+
+        var weekStats = document.createElement('div');
+        weekStats.className = 'recon-mini-stats';
+        weekStats.innerHTML = '<span>應收 <b>' + fmt(w.estSum) + '</b></span><span>實收 <b>' + fmt(w.actSum) + '</b></span>';
+        weekDetails.appendChild(weekStats);
+
+        var dayList = document.createElement('div');
+        dayList.className = 'recon-day-list';
+        w.days.forEach(function (row) {
+          var d = new Date(row.date + 'T00:00:00');
+          var wd = weekdayNames[d.getDay()];
+          var el = document.createElement('div');
+          el.className = 'recon-day-row';
+          el.innerHTML =
+            '<span class="recon-day-date tnum">' + formatMD(d) + ' ' + wd + '</span>' +
+            '<span class="recon-day-col tnum">應收 ' + fmt(row.est) + '</span>' +
+            '<span class="recon-day-col tnum">入帳 ' + (row.act ? fmt(row.act) : '—') + '</span>' +
+            '<span class="recon-day-col strong tnum">' + fmt(row.cumulative) + '</span>';
+          dayList.appendChild(el);
+        });
+        weekDetails.appendChild(dayList);
+        monthDetails.appendChild(weekDetails);
+      }
+
+      container.appendChild(monthDetails);
+    }
+  }
+
+  function renderRecon() {
+    var rows = buildReconRows();
+    var outstanding = rows.length ? rows[rows.length - 1].cumulative : 0;
+    var el = document.getElementById('reconOutstanding');
+    el.textContent = fmt(outstanding);
+    el.className = 'v tnum ' + (outstanding < 0 ? 'neg' : 'pos');
+    renderDepositList();
+    renderReconAccordion(rows);
+  }
 
   applyLabels();
   loadDateIntoForm(todayKey());
