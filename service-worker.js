@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taxi-ledger-v20';
+const CACHE_NAME = 'taxi-ledger-v21';
 const ASSETS = [
   './',
   './index.html',

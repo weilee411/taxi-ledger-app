@@ -400,8 +400,15 @@
           <option value="credit">信用</option>
         </select>
       </div>
+      <div class="recon-field"><label for="accountCurrency">幣別</label>
+        <select id="accountCurrency">
+          <option value="TWD">TWD(新台幣)</option>
+          <option value="USD">USD(美金)</option>
+        </select>
+      </div>
       <div class="recon-field"><label for="accountInitialBalance">初始金額</label><input type="text" inputmode="decimal" id="accountInitialBalance" placeholder="0"></div>
       <div class="field"><label>納入總餘額</label><input type="checkbox" id="accountIncludeInTotal" checked style="width:22px; height:22px;"></div>
+      <p class="settings-hint" id="accountCurrencyHint" style="display:none;">非台幣帳戶不會加進「總餘額」,避免美金/台幣直接加總算錯</p>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button type="button" class="btn" id="accountSaveBtn" style="flex:1">儲存帳戶</button>
         <button type="button" class="btn ghost small" id="accountArchiveBtn" style="display:none;">封存</button>
@@ -409,6 +416,26 @@
       </div>
       <button type="button" class="btn ghost small" id="accountCancelEditBtn" style="display:none; margin-top:8px;">取消編輯,新增帳戶</button>
     </div>
+
+    <div class="card">
+      <h2 id="transferFormTitle">新增轉帳</h2>
+      <div class="recon-field"><label for="transferDate">日期</label><input type="date" id="transferDate"></div>
+      <div class="recon-field"><label for="transferFromSelect">從哪個帳戶</label><select id="transferFromSelect"></select></div>
+      <div class="recon-field"><label for="transferToSelect">轉到哪個帳戶</label><select id="transferToSelect"></select></div>
+      <div class="recon-field"><label for="transferAmount">金額</label><input type="text" inputmode="decimal" id="transferAmount" placeholder="0"></div>
+      <div class="recon-field"><label for="transferNote">備註</label><input type="text" id="transferNote" maxlength="20" placeholder="選填"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" id="transferSaveBtn" style="flex:1">儲存這筆轉帳</button>
+        <button type="button" class="btn ghost small" id="transferDeleteBtn" style="display:none;">刪除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>轉帳紀錄</h2>
+      <div id="transferList"><p class="empty">還沒有記錄</p></div>
+    </div>
+
+    <button type="button" class="btn ghost small" id="goToIncomesBtn">→ 收入明細(個案請款/借款等非每日收入)</button>
   </div>
 
   <div id="tab-expenses" style="display:none">
@@ -428,6 +455,27 @@
     <div class="card">
       <h2>支出紀錄</h2>
       <div id="expenseList"><p class="empty">還沒有記錄</p></div>
+    </div>
+  </div>
+
+  <div id="tab-incomes" style="display:none">
+    <div class="card">
+      <h2 id="incomeFormTitle">新增收入</h2>
+      <div class="recon-field"><label for="incomeDate">日期</label><input type="date" id="incomeDate"></div>
+      <div class="recon-field"><label for="incomeName">名稱</label><input type="text" id="incomeName" maxlength="20" placeholder="例如:直客/送機"></div>
+      <div class="recon-field"><label for="incomeAmount">金額</label><input type="text" inputmode="decimal" id="incomeAmount" placeholder="0"></div>
+      <div class="recon-field"><label for="incomeCategorySelect">分類</label><select id="incomeCategorySelect"></select></div>
+      <div class="recon-field"><label for="incomeAccountSelect">帳戶</label><select id="incomeAccountSelect"></select></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" id="incomeSaveBtn" style="flex:1">儲存這筆收入</button>
+        <button type="button" class="btn ghost small" id="incomeDeleteBtn" style="display:none;">刪除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>收入紀錄</h2>
+      <p class="settings-hint">這裡是逐筆的其他收入紀錄(例如個案請款、借款、歷史資料),跟「營業收入」分頁的568/Uber每日計算機是分開的兩件事,不會互相影響。</p>
+      <div id="incomeList"><p class="empty">還沒有記錄</p></div>
     </div>
   </div>
 
@@ -452,9 +500,23 @@
   var LABELS_KEY = 'taxiLedgerLabels';
   var ids = ['cash568','online568','uber','bolt','yoxi','direct','other'];
   var DEFAULT_LABELS = { cash568:'568 現金', online568:'568 綁定', uber:'Uber', bolt:'Bolt', yoxi:'yoxi', direct:'直客', other:'其他' };
-  var CATEGORY_IDS = ['fuel','parking','maintenance','telecom','food','other'];
+  // RENAMABLE_CATEGORY_IDS 是設定面板裡可以改名字的原始6個(給非計程車行業的使用者用);
+  // CATEGORY_IDS 是完整分類清單(含Wei從舊記帳App匯入資料時實際在用的分類),下拉選單用這份完整清單,
+  // 多出來的分類目前沒有個別改名欄位,避免設定面板塞爆——要改名字可以之後再加
+  var RENAMABLE_CATEGORY_IDS = ['fuel','parking','maintenance','telecom','food','other'];
+  var CATEGORY_IDS = RENAMABLE_CATEGORY_IDS.concat([
+    'platform_fee','fine','insurance','ride_refund','car_misc',
+    'fixed','subscription','lifestyle','household','self_growth','case_expense',
+    'equipment','investment','other_transport','utility','medical','charity','adjustment'
+  ]);
   var CATEGORY_LABELS_KEY = 'taxiLedgerExpenseCategoryLabels';
-  var DEFAULT_CATEGORY_LABELS = { fuel:'加油', parking:'停車過路', maintenance:'保養維修', telecom:'通訊網路', food:'飲食', other:'其他' };
+  var DEFAULT_CATEGORY_LABELS = {
+    fuel:'加油', parking:'停車過路', maintenance:'保養維修', telecom:'通訊網路', food:'飲食', other:'其他',
+    platform_fee:'平台月費', fine:'罰單', insurance:'保險/驗車', ride_refund:'車資回金', car_misc:'汽車雜支',
+    fixed:'固定支出', subscription:'App訂閱', lifestyle:'生活娛樂購物', household:'家用支出',
+    self_growth:'自我進修', case_expense:'個案花費', equipment:'設備添購', investment:'投資理財',
+    other_transport:'其他交通', utility:'公共支出', medical:'醫療', charity:'公益捐款', adjustment:'餘額調整'
+  };
 
   function loadCategoryLabels() {
     var merged = {};
@@ -474,7 +536,35 @@
     localStorage.setItem(CATEGORY_LABELS_KEY, JSON.stringify(obj));
   }
 
+  // ---- 收入分類(獨立於支出分類的另一組) ----
+  var INCOME_CATEGORY_IDS = ['ride_income','case_invoice','borrowed','other_income','adjustment'];
+  var INCOME_CATEGORY_LABELS_KEY = 'taxiLedgerIncomeCategoryLabels';
+  var DEFAULT_INCOME_CATEGORY_LABELS = { ride_income:'跑車收入', case_invoice:'個案請款', borrowed:'借款', other_income:'其他收入', adjustment:'餘額調整' };
+
+  function loadIncomeCategoryLabels() {
+    var merged = {};
+    var saved = {};
+    try {
+      var raw = localStorage.getItem(INCOME_CATEGORY_LABELS_KEY);
+      saved = raw ? JSON.parse(raw) : {};
+    } catch (e) { saved = {}; }
+    INCOME_CATEGORY_IDS.forEach(function (k) {
+      var v = saved[k];
+      merged[k] = (typeof v === 'string' && v.trim()) ? v.trim() : DEFAULT_INCOME_CATEGORY_LABELS[k];
+    });
+    return merged;
+  }
+
+  function saveIncomeCategoryLabels(obj) {
+    localStorage.setItem(INCOME_CATEGORY_LABELS_KEY, JSON.stringify(obj));
+  }
+
   function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function uniqueId(prefix) {
+    // Date.now()單獨用在快速連續新增時可能撞號(同一毫秒),加隨機尾巴避免碰撞
+    return prefix + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  }
 
   function todayKey() {
     var d = new Date();
@@ -886,7 +976,7 @@
     var current = loadLabels();
     ids.forEach(function (k) { document.getElementById('set-' + k).value = current[k]; });
     var currentCat = loadCategoryLabels();
-    CATEGORY_IDS.forEach(function (k) { document.getElementById('set-cat-' + k).value = currentCat[k]; });
+    RENAMABLE_CATEGORY_IDS.forEach(function (k) { document.getElementById('set-cat-' + k).value = currentCat[k]; });
     settingsPanel.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -908,7 +998,7 @@
   });
   document.getElementById('catSettingsSaveBtn').addEventListener('click', function () {
     var updated = {};
-    CATEGORY_IDS.forEach(function (k) {
+    RENAMABLE_CATEGORY_IDS.forEach(function (k) {
       var v = document.getElementById('set-cat-' + k).value.trim();
       updated[k] = v || DEFAULT_CATEGORY_LABELS[k];
     });
@@ -948,7 +1038,7 @@
   var currentTab = 'today';
   function switchTab(tab) {
     currentTab = tab;
-    ['today', 'stats', 'recon', 'accounts', 'expenses'].forEach(function (t) {
+    ['today', 'stats', 'recon', 'accounts', 'expenses', 'incomes'].forEach(function (t) {
       document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -958,8 +1048,9 @@
     if (tab === 'today') renderCalendar();
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
-    if (tab === 'accounts') { resetAccountForm(); renderAccounts(); }
+    if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
     if (tab === 'expenses') { resetExpenseForm(); renderExpenseList(); }
+    if (tab === 'incomes') { resetIncomeForm(); renderIncomeList(); }
     window.scrollTo({ top: 0, behavior: 'instant' in window.scrollTo ? 'instant' : 'auto' });
   }
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -1211,7 +1302,7 @@
         return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform, accountId: accountId } : d;
       });
     } else {
-      deposits.push({ id: 'd' + Date.now(), amount: amount, date: date, platform: selectedReconPlatform, accountId: accountId });
+      deposits.push({ id: uniqueId('d'), amount: amount, date: date, platform: selectedReconPlatform, accountId: accountId });
     }
     saveDepositsList(deposits);
     resetReconForm();
@@ -1402,17 +1493,28 @@
     var spent = loadExpenses()
       .filter(function (e) { return e.accountId === account.id; })
       .reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+    var earned = loadIncomes()
+      .filter(function (i) { return i.accountId === account.id; })
+      .reduce(function (s, i) { return s + (i.amount || 0); }, 0);
+    var transferIn = loadTransfers()
+      .filter(function (t) { return t.toAccountId === account.id; })
+      .reduce(function (s, t) { return s + (t.amount || 0); }, 0);
+    var transferOut = loadTransfers()
+      .filter(function (t) { return t.fromAccountId === account.id; })
+      .reduce(function (s, t) { return s + (t.amount || 0); }, 0);
     if (account.type === 'credit') {
-      // 信用帳戶:餘額代表「目前欠多少」,消費會累加,還沒有繳款/連動現金帳戶的機制(留給之後的「信用帳戶」階段)
-      return (account.initialBalance || 0) + spent;
+      // 信用帳戶:餘額代表「目前欠多少」,消費/轉出會增加負債,轉入(還款/繳款)會減少負債
+      return (account.initialBalance || 0) + spent + transferOut - transferIn;
     }
-    return (account.initialBalance || 0) + deposited - spent;
+    return (account.initialBalance || 0) + deposited + earned - spent + transferIn - transferOut;
   }
 
   function resetAccountForm() {
     editingAccountId = null;
     document.getElementById('accountName').value = '';
     document.getElementById('accountType').value = 'cash';
+    document.getElementById('accountCurrency').value = 'TWD';
+    document.getElementById('accountCurrencyHint').style.display = 'none';
     document.getElementById('accountInitialBalance').value = '';
     document.getElementById('accountIncludeInTotal').checked = true;
     document.getElementById('accountFormTitle').textContent = '新增帳戶';
@@ -1426,6 +1528,8 @@
     editingAccountId = acc.id;
     document.getElementById('accountName').value = acc.name;
     document.getElementById('accountType').value = acc.type;
+    document.getElementById('accountCurrency').value = acc.currency || 'TWD';
+    document.getElementById('accountCurrencyHint').style.display = (acc.currency && acc.currency !== 'TWD') ? 'block' : 'none';
     document.getElementById('accountInitialBalance').value = acc.initialBalance || '';
     document.getElementById('accountIncludeInTotal').checked = acc.includeInTotal !== false;
     document.getElementById('accountFormTitle').textContent = '編輯帳戶';
@@ -1437,10 +1541,14 @@
   }
 
   document.getElementById('accountCancelEditBtn').addEventListener('click', resetAccountForm);
+  document.getElementById('accountCurrency').addEventListener('change', function () {
+    document.getElementById('accountCurrencyHint').style.display = (this.value !== 'TWD') ? 'block' : 'none';
+  });
 
   document.getElementById('accountSaveBtn').addEventListener('click', function () {
     var name = document.getElementById('accountName').value.trim();
     var type = document.getElementById('accountType').value;
+    var currency = document.getElementById('accountCurrency').value;
     var initialBalance = parseFloat(document.getElementById('accountInitialBalance').value);
     if (isNaN(initialBalance)) initialBalance = 0;
     var includeInTotal = document.getElementById('accountIncludeInTotal').checked;
@@ -1449,11 +1557,11 @@
     if (editingAccountId) {
       accounts = accounts.map(function (a) {
         return a.id === editingAccountId
-          ? { id: a.id, name: name, type: type, initialBalance: initialBalance, includeInTotal: includeInTotal, archived: a.archived }
+          ? { id: a.id, name: name, type: type, currency: currency, initialBalance: initialBalance, includeInTotal: includeInTotal, archived: a.archived }
           : a;
       });
     } else {
-      accounts.push({ id: 'a' + Date.now(), name: name, type: type, initialBalance: initialBalance, includeInTotal: includeInTotal, archived: false });
+      accounts.push({ id: uniqueId('a'), name: name, type: type, currency: currency, initialBalance: initialBalance, includeInTotal: includeInTotal, archived: false });
     }
     saveAccountsList(accounts);
     resetAccountForm();
@@ -1488,11 +1596,12 @@
     } else {
       accounts.forEach(function (acc) {
         var balance = computeAccountBalance(acc);
+        var currency = acc.currency || 'TWD';
         var row = document.createElement('div');
         row.className = 'account-row' + (acc.archived ? ' archived' : '');
         row.innerHTML =
-          '<span><span class="account-name">' + acc.name + '</span><span class="account-type-badge">' + ACCOUNT_TYPE_LABEL[acc.type] + (acc.archived ? '·已封存' : '') + '</span></span>' +
-          '<span class="account-balance tnum">' + fmt(balance) + '</span>';
+          '<span><span class="account-name">' + acc.name + '</span><span class="account-type-badge">' + ACCOUNT_TYPE_LABEL[acc.type] + (currency !== 'TWD' ? '·' + currency : '') + (acc.archived ? '·已封存' : '') + '</span></span>' +
+          '<span class="account-balance tnum">' + (currency !== 'TWD' ? currency + ' ' : '') + fmt(balance) + '</span>';
         row.addEventListener('click', function () {
           loadAccountIntoForm(acc);
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1500,8 +1609,9 @@
         container.appendChild(row);
       });
     }
-    // 信用帳戶餘額代表「欠多少」,是負債不是資產,算總餘額(淨值)時要用減的,不能直接加
-    var total = accounts.filter(function (a) { return a.includeInTotal !== false && !a.archived; })
+    // 信用帳戶餘額代表「欠多少」,是負債不是資產,算總餘額(淨值)時要用減的,不能直接加;
+    // 非台幣帳戶(目前只有美金)不納入台幣總餘額,避免直接把美金數字加進台幣總和算錯
+    var total = accounts.filter(function (a) { return a.includeInTotal !== false && !a.archived && (a.currency || 'TWD') === 'TWD'; })
       .reduce(function (s, a) { var b = computeAccountBalance(a); return s + (a.type === 'credit' ? -b : b); }, 0);
     document.getElementById('accountsTotalBalance').textContent = fmt(total);
   }
@@ -1587,7 +1697,7 @@
         return e.id === editingExpenseId ? { id: e.id, date: date, name: name, amount: amount, category: category, accountId: accountId } : e;
       });
     } else {
-      expenses.push({ id: 'e' + Date.now(), date: date, name: name, amount: amount, category: category, accountId: accountId });
+      expenses.push({ id: uniqueId('e'), date: date, name: name, amount: amount, category: category, accountId: accountId });
     }
     saveExpensesList(expenses);
     resetExpenseForm();
@@ -1627,6 +1737,235 @@
     });
   }
 
+  // ---- 轉帳(帳戶之間互轉,含繳信用卡這種現金→信用帳戶的轉帳) ----
+  var TRANSFERS_KEY = 'taxiLedgerTransfers';
+  var editingTransferId = null;
+
+  function loadTransfers() {
+    try {
+      var raw = localStorage.getItem(TRANSFERS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveTransfersList(arr) {
+    localStorage.setItem(TRANSFERS_KEY, JSON.stringify(arr));
+  }
+
+  function populateTransferAccountSelects(fromId, toId) {
+    [['transferFromSelect', fromId], ['transferToSelect', toId]].forEach(function (pair) {
+      var sel = document.getElementById(pair[0]);
+      sel.innerHTML = '';
+      loadAccounts().filter(function (a) { return !a.archived; }).forEach(function (a) {
+        var opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name + '(' + ACCOUNT_TYPE_LABEL[a.type] + ')';
+        sel.appendChild(opt);
+      });
+      if (pair[1]) sel.value = pair[1];
+    });
+  }
+
+  function resetTransferForm() {
+    editingTransferId = null;
+    document.getElementById('transferDate').value = todayKey();
+    document.getElementById('transferAmount').value = '';
+    document.getElementById('transferNote').value = '';
+    populateTransferAccountSelects('', '');
+    document.getElementById('transferFormTitle').textContent = '新增轉帳';
+    document.getElementById('transferSaveBtn').textContent = '儲存這筆轉帳';
+    document.getElementById('transferDeleteBtn').style.display = 'none';
+  }
+
+  function loadTransferIntoForm(tr) {
+    editingTransferId = tr.id;
+    document.getElementById('transferDate').value = tr.date;
+    document.getElementById('transferAmount').value = tr.amount;
+    document.getElementById('transferNote').value = tr.note || '';
+    populateTransferAccountSelects(tr.fromAccountId, tr.toAccountId);
+    document.getElementById('transferFormTitle').textContent = '編輯這筆轉帳';
+    document.getElementById('transferSaveBtn').textContent = '更新這筆轉帳';
+    document.getElementById('transferDeleteBtn').style.display = 'block';
+  }
+
+  document.getElementById('goToIncomesBtn').addEventListener('click', function () { switchTab('incomes'); });
+
+  document.getElementById('transferSaveBtn').addEventListener('click', function () {
+    var date = document.getElementById('transferDate').value;
+    var fromAccountId = document.getElementById('transferFromSelect').value;
+    var toAccountId = document.getElementById('transferToSelect').value;
+    var amount = parseFloat(document.getElementById('transferAmount').value);
+    var note = document.getElementById('transferNote').value.trim();
+    if (!date || !fromAccountId || !toAccountId || isNaN(amount)) { alert('請選擇帳戶並輸入日期跟金額'); return; }
+    if (fromAccountId === toAccountId) { alert('來源帳戶跟目標帳戶不能一樣'); return; }
+    var transfers = loadTransfers();
+    if (editingTransferId) {
+      transfers = transfers.map(function (t) {
+        return t.id === editingTransferId ? { id: t.id, date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note } : t;
+      });
+    } else {
+      transfers.push({ id: uniqueId('t'), date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note });
+    }
+    saveTransfersList(transfers);
+    resetTransferForm();
+    renderAccounts();
+    renderTransferList();
+  });
+
+  document.getElementById('transferDeleteBtn').addEventListener('click', function () {
+    if (!editingTransferId) return;
+    if (!confirm('刪除這筆轉帳紀錄?')) return;
+    var transfers = loadTransfers().filter(function (t) { return t.id !== editingTransferId; });
+    saveTransfersList(transfers);
+    resetTransferForm();
+    renderAccounts();
+    renderTransferList();
+  });
+
+  function renderTransferList() {
+    var accounts = loadAccounts();
+    var accountName = {};
+    accounts.forEach(function (a) { accountName[a.id] = a.name; });
+    var transfers = loadTransfers().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var container = document.getElementById('transferList');
+    container.innerHTML = '';
+    if (!transfers.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
+    transfers.forEach(function (tr) {
+      var sub = (accountName[tr.fromAccountId] || '?') + ' → ' + (accountName[tr.toAccountId] || '?') + (tr.note ? ' · ' + tr.note : '');
+      var row = document.createElement('div');
+      row.className = 'recent-item';
+      row.innerHTML =
+        '<span class="recent-date tnum">' + formatDateLabel(tr.date) + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
+        '<span class="recent-amt tnum">' + fmt(tr.amount) + '</span>';
+      row.addEventListener('click', function () {
+        loadTransferIntoForm(tr);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      container.appendChild(row);
+    });
+  }
+
+  // ---- 收入明細(逐筆記錄,獨立於「今日輸入」的568/平台每日計算機,涵蓋個案請款/借款/歷史資料等) ----
+  var INCOMES_KEY = 'taxiLedgerIncomes';
+  var editingIncomeId = null;
+
+  function loadIncomes() {
+    try {
+      var raw = localStorage.getItem(INCOMES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveIncomesList(arr) {
+    localStorage.setItem(INCOMES_KEY, JSON.stringify(arr));
+  }
+
+  function populateIncomeCategorySelect(selectedCategory) {
+    var sel = document.getElementById('incomeCategorySelect');
+    sel.innerHTML = '';
+    var labels = loadIncomeCategoryLabels();
+    INCOME_CATEGORY_IDS.forEach(function (id) {
+      var opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = labels[id];
+      sel.appendChild(opt);
+    });
+    sel.value = selectedCategory || INCOME_CATEGORY_IDS[0];
+  }
+
+  function populateIncomeAccountSelect(selectedAccountId) {
+    var sel = document.getElementById('incomeAccountSelect');
+    sel.innerHTML = '';
+    var noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = '— 未指定帳戶 —';
+    sel.appendChild(noneOpt);
+    loadAccounts().filter(function (a) { return !a.archived; }).forEach(function (a) {
+      var opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name + '(' + ACCOUNT_TYPE_LABEL[a.type] + ')';
+      sel.appendChild(opt);
+    });
+    sel.value = selectedAccountId || '';
+  }
+
+  function resetIncomeForm() {
+    editingIncomeId = null;
+    document.getElementById('incomeDate').value = todayKey();
+    document.getElementById('incomeName').value = '';
+    document.getElementById('incomeAmount').value = '';
+    populateIncomeCategorySelect('');
+    populateIncomeAccountSelect('');
+    document.getElementById('incomeFormTitle').textContent = '新增收入';
+    document.getElementById('incomeSaveBtn').textContent = '儲存這筆收入';
+    document.getElementById('incomeDeleteBtn').style.display = 'none';
+  }
+
+  function loadIncomeIntoForm(inc) {
+    editingIncomeId = inc.id;
+    document.getElementById('incomeDate').value = inc.date;
+    document.getElementById('incomeName').value = inc.name;
+    document.getElementById('incomeAmount').value = inc.amount;
+    populateIncomeCategorySelect(inc.category);
+    populateIncomeAccountSelect(inc.accountId);
+    document.getElementById('incomeFormTitle').textContent = '編輯這筆收入';
+    document.getElementById('incomeSaveBtn').textContent = '更新這筆收入';
+    document.getElementById('incomeDeleteBtn').style.display = 'block';
+  }
+
+  document.getElementById('incomeSaveBtn').addEventListener('click', function () {
+    var date = document.getElementById('incomeDate').value;
+    var name = document.getElementById('incomeName').value.trim();
+    var amount = parseFloat(document.getElementById('incomeAmount').value);
+    var category = document.getElementById('incomeCategorySelect').value;
+    var accountId = document.getElementById('incomeAccountSelect').value;
+    if (!date || !name || isNaN(amount)) { alert('請輸入日期、名稱跟金額'); return; }
+    var incomes = loadIncomes();
+    if (editingIncomeId) {
+      incomes = incomes.map(function (i) {
+        return i.id === editingIncomeId ? { id: i.id, date: date, name: name, amount: amount, category: category, accountId: accountId } : i;
+      });
+    } else {
+      incomes.push({ id: uniqueId('i'), date: date, name: name, amount: amount, category: category, accountId: accountId });
+    }
+    saveIncomesList(incomes);
+    resetIncomeForm();
+    renderIncomeList();
+  });
+
+  document.getElementById('incomeDeleteBtn').addEventListener('click', function () {
+    if (!editingIncomeId) return;
+    if (!confirm('刪除這筆收入紀錄?')) return;
+    var incomes = loadIncomes().filter(function (i) { return i.id !== editingIncomeId; });
+    saveIncomesList(incomes);
+    resetIncomeForm();
+    renderIncomeList();
+  });
+
+  function renderIncomeList() {
+    var labels = loadIncomeCategoryLabels();
+    var accounts = loadAccounts();
+    var accountName = {};
+    accounts.forEach(function (a) { accountName[a.id] = a.name; });
+    var incomes = loadIncomes().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var container = document.getElementById('incomeList');
+    container.innerHTML = '';
+    if (!incomes.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
+    incomes.forEach(function (inc) {
+      var sub = (labels[inc.category] || inc.category) + (inc.accountId && accountName[inc.accountId] ? ' · ' + accountName[inc.accountId] : '');
+      var row = document.createElement('div');
+      row.className = 'recent-item';
+      row.innerHTML =
+        '<span class="recent-date tnum">' + formatDateLabel(inc.date) + ' ' + inc.name + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
+        '<span class="recent-amt tnum">' + fmt(inc.amount) + '</span>';
+      row.addEventListener('click', function () {
+        loadIncomeIntoForm(inc);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      container.appendChild(row);
+    });
+  }
+
   // ---- 資料備份(匯出/匯入,合併不覆蓋) ----
   document.getElementById('exportBtn').addEventListener('click', function () {
     var data = {};
@@ -1636,6 +1975,9 @@
     data[ACCOUNTS_KEY] = loadAccounts();
     data[EXPENSES_KEY] = loadExpenses();
     data[CATEGORY_LABELS_KEY] = loadCategoryLabels();
+    data[INCOMES_KEY] = loadIncomes();
+    data[INCOME_CATEGORY_LABELS_KEY] = loadIncomeCategoryLabels();
+    data[TRANSFERS_KEY] = loadTransfers();
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -1685,7 +2027,20 @@
           data[EXPENSES_KEY].forEach(function (e) { byExpId[e.id] = e; });
           saveExpensesList(Object.keys(byExpId).map(function (k) { return byExpId[k]; }));
         }
+        if (Array.isArray(data[INCOMES_KEY])) {
+          var byIncId = {};
+          loadIncomes().forEach(function (i) { byIncId[i.id] = i; });
+          data[INCOMES_KEY].forEach(function (i) { byIncId[i.id] = i; });
+          saveIncomesList(Object.keys(byIncId).map(function (k) { return byIncId[k]; }));
+        }
+        if (Array.isArray(data[TRANSFERS_KEY])) {
+          var byTrId = {};
+          loadTransfers().forEach(function (t) { byTrId[t.id] = t; });
+          data[TRANSFERS_KEY].forEach(function (t) { byTrId[t.id] = t; });
+          saveTransfersList(Object.keys(byTrId).map(function (k) { return byTrId[k]; }));
+        }
         if (data[CATEGORY_LABELS_KEY]) { saveCategoryLabels(data[CATEGORY_LABELS_KEY]); }
+        if (data[INCOME_CATEGORY_LABELS_KEY]) { saveIncomeCategoryLabels(data[INCOME_CATEGORY_LABELS_KEY]); }
         if (data[LABELS_KEY]) { saveLabels(data[LABELS_KEY]); }
         applyLabels();
         loadDateIntoForm(editingDate);
