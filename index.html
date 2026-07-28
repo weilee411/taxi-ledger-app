@@ -54,8 +54,14 @@
 
   .recon-field { margin-bottom: 10px; min-width: 0; overflow: hidden; }
   .recon-field label { display: block; font-size: 13px; color: var(--ink-muted); font-weight: 600; margin-bottom: 4px; }
-  .recon-field input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); font-variant-numeric: tabular-nums; -webkit-appearance: none; appearance: none; }
+  .recon-field input, .recon-field select { display: block; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); font-variant-numeric: tabular-nums; -webkit-appearance: none; appearance: none; }
   .recon-field input[type="date"] { min-width: 0; }
+  .account-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px; border-bottom: 1px solid var(--border); cursor: pointer; gap: 10px; }
+  .account-row:last-child { border-bottom: none; }
+  .account-row.archived { opacity: .5; }
+  .account-name { font-size: 15px; font-weight: 700; }
+  .account-type-badge { font-size: 12px; color: var(--ink-muted); font-weight: 600; margin-left: 6px; }
+  .account-balance { font-size: 15px; font-weight: 700; }
 
   details.recon-month { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
   details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; gap: 10px; }
@@ -337,6 +343,7 @@
       <h2 id="reconFormTitle">新增銀行入帳</h2>
       <div class="recon-field"><label for="reconAmount">金額</label><input type="text" inputmode="decimal" id="reconAmount" placeholder="0"></div>
       <div class="recon-field"><label for="reconDate">日期</label><input type="date" id="reconDate"></div>
+      <div class="recon-field"><label for="reconAccountSelect">入帳到哪個帳戶</label><select id="reconAccountSelect"></select></div>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button type="button" class="btn" id="reconSaveBtn" style="flex:1">儲存這筆入帳</button>
         <button type="button" class="btn ghost small" id="reconDeleteBtn" style="display:none;">刪除</button>
@@ -354,13 +361,48 @@
     </div>
   </div>
 
-  <p class="foot">記帳本 v3 · 今日輸入 / 歷史 / 統計 / 對帳<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
+  <div id="tab-accounts" style="display:none">
+    <div class="card">
+      <h2>帳戶總覽</h2>
+      <div class="hero">
+        <div class="k">總餘額</div>
+        <div class="v tnum" id="accountsTotalBalance">$0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>帳戶列表</h2>
+      <div id="accountList"><p class="empty">還沒有帳戶,新增第一個吧</p></div>
+    </div>
+
+    <div class="card">
+      <h2 id="accountFormTitle">新增帳戶</h2>
+      <div class="recon-field"><label for="accountName">名稱</label><input type="text" id="accountName" maxlength="20" placeholder="例如:中國信託"></div>
+      <div class="recon-field"><label for="accountType">類型</label>
+        <select id="accountType">
+          <option value="cash">現金</option>
+          <option value="credit">信用</option>
+        </select>
+      </div>
+      <div class="recon-field"><label for="accountInitialBalance">初始金額</label><input type="text" inputmode="decimal" id="accountInitialBalance" placeholder="0"></div>
+      <div class="field"><label>納入總餘額</label><input type="checkbox" id="accountIncludeInTotal" checked style="width:22px; height:22px;"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" id="accountSaveBtn" style="flex:1">儲存帳戶</button>
+        <button type="button" class="btn ghost small" id="accountArchiveBtn" style="display:none;">封存</button>
+        <button type="button" class="btn ghost small" id="accountDeleteBtn" style="display:none;">刪除</button>
+      </div>
+      <button type="button" class="btn ghost small" id="accountCancelEditBtn" style="display:none; margin-top:8px;">取消編輯,新增帳戶</button>
+    </div>
+  </div>
+
+  <p class="foot">記帳本 v3 · 今日輸入 / 歷史 / 統計 / 對帳 / 帳戶<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
 
   <div class="tabbar" id="tabbar">
     <button type="button" class="tab-btn active" data-tab="today">今日輸入</button>
     <button type="button" class="tab-btn" data-tab="history">歷史</button>
     <button type="button" class="tab-btn" data-tab="stats">統計</button>
     <button type="button" class="tab-btn" data-tab="recon">對帳</button>
+    <button type="button" class="tab-btn" data-tab="accounts">帳戶</button>
   </div>
 
 <script>
@@ -829,7 +871,7 @@
   var currentTab = 'today';
   function switchTab(tab) {
     currentTab = tab;
-    ['today', 'history', 'stats', 'recon'].forEach(function (t) {
+    ['today', 'history', 'stats', 'recon', 'accounts'].forEach(function (t) {
       document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -839,6 +881,7 @@
     if (tab === 'history') renderCalendar();
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
+    if (tab === 'accounts') { resetAccountForm(); renderAccounts(); }
     window.scrollTo({ top: 0, behavior: 'instant' in window.scrollTo ? 'instant' : 'auto' });
   }
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -1017,6 +1060,22 @@
     sel.value = selectedReconPlatform;
   }
 
+  function populateReconAccountSelect(selectedAccountId) {
+    var sel = document.getElementById('reconAccountSelect');
+    sel.innerHTML = '';
+    var noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = '— 未指定帳戶 —';
+    sel.appendChild(noneOpt);
+    loadAccounts().filter(function (a) { return a.type === 'cash' && !a.archived; }).forEach(function (a) {
+      var opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name;
+      sel.appendChild(opt);
+    });
+    sel.value = selectedAccountId || '';
+  }
+
   function resetReconForm() {
     editingDepositId = null;
     document.getElementById('reconAmount').value = '';
@@ -1024,6 +1083,7 @@
     document.getElementById('reconFormTitle').textContent = '新增銀行入帳';
     document.getElementById('reconSaveBtn').textContent = '儲存這筆入帳';
     document.getElementById('reconDeleteBtn').style.display = 'none';
+    populateReconAccountSelect('');
   }
 
   function loadDepositIntoForm(dep) {
@@ -1033,6 +1093,7 @@
     document.getElementById('reconFormTitle').textContent = '編輯這筆入帳';
     document.getElementById('reconSaveBtn').textContent = '更新這筆入帳';
     document.getElementById('reconDeleteBtn').style.display = 'block';
+    populateReconAccountSelect(dep.accountId);
   }
 
   document.getElementById('reconPlatformSelect').addEventListener('change', function () {
@@ -1044,14 +1105,15 @@
   document.getElementById('reconSaveBtn').addEventListener('click', function () {
     var amount = parseFloat(document.getElementById('reconAmount').value);
     var date = document.getElementById('reconDate').value;
+    var accountId = document.getElementById('reconAccountSelect').value;
     if (isNaN(amount) || !date) { alert('請輸入金額跟日期'); return; }
     var deposits = loadDeposits();
     if (editingDepositId) {
       deposits = deposits.map(function (d) {
-        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform } : d;
+        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform, accountId: accountId } : d;
       });
     } else {
-      deposits.push({ id: 'd' + Date.now(), amount: amount, date: date, platform: selectedReconPlatform });
+      deposits.push({ id: 'd' + Date.now(), amount: amount, date: date, platform: selectedReconPlatform, accountId: accountId });
     }
     saveDepositsList(deposits);
     resetReconForm();
@@ -1219,12 +1281,132 @@
     renderReconAccordion(rows);
   }
 
+  // ---- 帳戶(現金/信用,精簡版——貸款/帳單週期/連動主帳戶留到之後) ----
+  var ACCOUNTS_KEY = 'taxiLedgerAccounts';
+  var editingAccountId = null;
+  var ACCOUNT_TYPE_LABEL = { cash: '現金', credit: '信用' };
+
+  function loadAccounts() {
+    try {
+      var raw = localStorage.getItem(ACCOUNTS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveAccountsList(arr) {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(arr));
+  }
+
+  function computeAccountBalance(account) {
+    var deposited = loadDeposits()
+      .filter(function (d) { return d.accountId === account.id; })
+      .reduce(function (s, d) { return s + (d.amount || 0); }, 0);
+    return (account.initialBalance || 0) + deposited;
+  }
+
+  function resetAccountForm() {
+    editingAccountId = null;
+    document.getElementById('accountName').value = '';
+    document.getElementById('accountType').value = 'cash';
+    document.getElementById('accountInitialBalance').value = '';
+    document.getElementById('accountIncludeInTotal').checked = true;
+    document.getElementById('accountFormTitle').textContent = '新增帳戶';
+    document.getElementById('accountSaveBtn').textContent = '儲存帳戶';
+    document.getElementById('accountArchiveBtn').style.display = 'none';
+    document.getElementById('accountDeleteBtn').style.display = 'none';
+    document.getElementById('accountCancelEditBtn').style.display = 'none';
+  }
+
+  function loadAccountIntoForm(acc) {
+    editingAccountId = acc.id;
+    document.getElementById('accountName').value = acc.name;
+    document.getElementById('accountType').value = acc.type;
+    document.getElementById('accountInitialBalance').value = acc.initialBalance || '';
+    document.getElementById('accountIncludeInTotal').checked = acc.includeInTotal !== false;
+    document.getElementById('accountFormTitle').textContent = '編輯帳戶';
+    document.getElementById('accountSaveBtn').textContent = '更新帳戶';
+    document.getElementById('accountArchiveBtn').textContent = acc.archived ? '取消封存' : '封存';
+    document.getElementById('accountArchiveBtn').style.display = 'block';
+    document.getElementById('accountDeleteBtn').style.display = 'block';
+    document.getElementById('accountCancelEditBtn').style.display = 'block';
+  }
+
+  document.getElementById('accountCancelEditBtn').addEventListener('click', resetAccountForm);
+
+  document.getElementById('accountSaveBtn').addEventListener('click', function () {
+    var name = document.getElementById('accountName').value.trim();
+    var type = document.getElementById('accountType').value;
+    var initialBalance = parseFloat(document.getElementById('accountInitialBalance').value);
+    if (isNaN(initialBalance)) initialBalance = 0;
+    var includeInTotal = document.getElementById('accountIncludeInTotal').checked;
+    if (!name) { alert('請輸入帳戶名稱'); return; }
+    var accounts = loadAccounts();
+    if (editingAccountId) {
+      accounts = accounts.map(function (a) {
+        return a.id === editingAccountId
+          ? { id: a.id, name: name, type: type, initialBalance: initialBalance, includeInTotal: includeInTotal, archived: a.archived }
+          : a;
+      });
+    } else {
+      accounts.push({ id: 'a' + Date.now(), name: name, type: type, initialBalance: initialBalance, includeInTotal: includeInTotal, archived: false });
+    }
+    saveAccountsList(accounts);
+    resetAccountForm();
+    renderAccounts();
+  });
+
+  document.getElementById('accountArchiveBtn').addEventListener('click', function () {
+    if (!editingAccountId) return;
+    var accounts = loadAccounts().map(function (a) {
+      return a.id === editingAccountId ? Object.assign({}, a, { archived: !a.archived }) : a;
+    });
+    saveAccountsList(accounts);
+    resetAccountForm();
+    renderAccounts();
+  });
+
+  document.getElementById('accountDeleteBtn').addEventListener('click', function () {
+    if (!editingAccountId) return;
+    if (!confirm('刪除這個帳戶?(帳戶底下的入帳紀錄不會被刪除,只是不再歸戶)')) return;
+    var accounts = loadAccounts().filter(function (a) { return a.id !== editingAccountId; });
+    saveAccountsList(accounts);
+    resetAccountForm();
+    renderAccounts();
+  });
+
+  function renderAccounts() {
+    var accounts = loadAccounts();
+    var container = document.getElementById('accountList');
+    container.innerHTML = '';
+    if (!accounts.length) {
+      container.innerHTML = '<p class="empty">還沒有帳戶,新增第一個吧</p>';
+    } else {
+      accounts.forEach(function (acc) {
+        var balance = computeAccountBalance(acc);
+        var row = document.createElement('div');
+        row.className = 'account-row' + (acc.archived ? ' archived' : '');
+        row.innerHTML =
+          '<span><span class="account-name">' + acc.name + '</span><span class="account-type-badge">' + ACCOUNT_TYPE_LABEL[acc.type] + (acc.archived ? '·已封存' : '') + '</span></span>' +
+          '<span class="account-balance tnum">' + fmt(balance) + '</span>';
+        row.addEventListener('click', function () {
+          loadAccountIntoForm(acc);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        container.appendChild(row);
+      });
+    }
+    var total = accounts.filter(function (a) { return a.includeInTotal !== false && !a.archived; })
+      .reduce(function (s, a) { return s + computeAccountBalance(a); }, 0);
+    document.getElementById('accountsTotalBalance').textContent = fmt(total);
+  }
+
   // ---- 資料備份(匯出/匯入,合併不覆蓋) ----
   document.getElementById('exportBtn').addEventListener('click', function () {
     var data = {};
     data[STORAGE_KEY] = loadDays();
     data[LABELS_KEY] = loadLabels();
     data[RECON_KEY] = loadDeposits();
+    data[ACCOUNTS_KEY] = loadAccounts();
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -1261,6 +1443,12 @@
           loadDeposits().forEach(function (d) { byId[d.id] = d; });
           importedDeposits.forEach(function (d) { byId[d.id] = d; });
           saveDepositsList(Object.keys(byId).map(function (k) { return byId[k]; }));
+        }
+        if (Array.isArray(data[ACCOUNTS_KEY])) {
+          var byAccId = {};
+          loadAccounts().forEach(function (a) { byAccId[a.id] = a; });
+          data[ACCOUNTS_KEY].forEach(function (a) { byAccId[a.id] = a; });
+          saveAccountsList(Object.keys(byAccId).map(function (k) { return byAccId[k]; }));
         }
         if (data[LABELS_KEY]) { saveLabels(data[LABELS_KEY]); }
         applyLabels();
