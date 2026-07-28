@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>記帳本 · 今日輸入</title>
+<title>記帳本 · 營業收入</title>
 <meta name="description" content="每天輸入 568 現金/線上支付跟其他平台收入,自動算好對帳金額,資料存在這支裝置上。">
 <meta name="theme-color" content="#2B6A78">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -66,7 +66,7 @@
   details.recon-month { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
   details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; gap: 10px; }
   details.recon-month > summary::-webkit-details-marker { display: none; }
-  .chev-badge { flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; transition: transform .15s ease; }
+  .chev-badge { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; overflow: visible; font-size: 44px; line-height: 1; font-weight: 700; transition: transform .15s ease; }
   details[open] > summary .chev-badge { transform: rotate(180deg); }
   .recon-mini-stats { display: flex; gap: 14px; padding: 0 16px 12px; font-size: 13px; color: var(--ink-muted); flex-wrap: wrap; }
   .recon-mini-stats b { color: var(--ink); font-weight: 700; }
@@ -109,7 +109,7 @@
   .btn.ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); font-weight: 600; font-size: 15px; padding: 10px; }
   .btn.small { padding: 8px 12px; font-size: 14px; width: auto; }
   .btn.saved { background: var(--income); }
-  .fab-save { position: fixed; left: 16px; right: 16px; bottom: calc(70px + env(safe-area-inset-bottom) + 10px); z-index: 15; max-width: 448px; margin: 0 auto; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .fab-save { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom) + 10px); z-index: 15; width: calc(100% - 32px); max-width: 448px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
 
   .empty { text-align: center; font-size: 14px; color: var(--ink-muted); padding: 12px 0; }
 
@@ -160,7 +160,7 @@
   .stats-delta.neg { color: var(--expense); }
 
   .yoy-nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
-  .cal-nav.small { width: 40px; height: 40px; font-size: 22px; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .cal-nav.small { width: 20px; height: 20px; overflow: visible; font-size: 44px; line-height: 1; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
   .dist-row { margin-bottom: 10px; }
   .dist-row:last-child { margin-bottom: 0; }
@@ -173,10 +173,10 @@
   .yoy-label-btn .yoy-label { text-decoration: underline dotted; text-underline-offset: 3px; }
   .yoy-label-btn .jump-overlay { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; padding: 0; margin: 0; cursor: pointer; }
 
-  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; background: var(--surface); border-top: 1px solid var(--border); padding: 6px max(16px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); z-index: 20; max-width: 480px; margin: 0 auto; }
+  .tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; display: flex; align-items: center; background: var(--surface); border-top: 1px solid var(--border); padding: 6px max(16px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); z-index: 20; width: 100%; max-width: 480px; }
   .tab-btn { flex: 1; min-width: 0; background: none; border: none; padding: 10px 2px; font-size: 12.5px; font-weight: 700; color: var(--ink-muted); cursor: pointer; border-radius: 10px; white-space: nowrap; }
   .tab-btn.active { color: var(--accent); background: var(--surface-alt); }
-  .tab-btn-center { flex-shrink: 0; width: 52px; height: 52px; margin: -22px 6px 0; border-radius: 50%; border: 4px solid var(--bg); background: var(--accent); color: var(--accent-ink); font-size: 28px; font-weight: 700; line-height: 1; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.3); }
+  .tab-btn-center { flex-shrink: 0; width: 52px; height: 52px; margin: -28px 6px 0; border-radius: 50%; border: 4px solid var(--bg); background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 46%), var(--accent); color: var(--accent-ink); font-size: 28px; font-weight: 700; line-height: 1; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.35), inset 0 1px 2px rgba(255,255,255,.5), inset 0 -3px 5px rgba(0,0,0,.2); }
   .quick-add-popup { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 21; display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
   .quick-add-popup button { white-space: nowrap; padding: 12px 22px; border-radius: 10px; border: none; background: var(--surface-alt); color: var(--ink); font-size: 15px; font-weight: 700; cursor: pointer; }
 
@@ -192,7 +192,7 @@
   <div class="topbar">
     <div>
       <h1>記帳本</h1>
-      <p class="sub">今日輸入 · 資料只存在這支裝置</p>
+      <p class="sub">營業收入 · 資料只存在這支裝置</p>
     </div>
     <button type="button" class="gearbtn" id="settingsBtn" aria-label="設定平台名稱">⚙</button>
   </div>
@@ -290,13 +290,8 @@
     </div>
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
-    <div style="height:64px;"></div>
-  </div>
 
-  <button class="btn fab-save" id="saveBtn" style="display:none;">儲存今天</button>
-
-  <div id="tab-history" style="display:none">
-    <div class="card">
+    <div class="card" style="margin-top:14px;">
       <h2>歷史紀錄</h2>
       <div class="cal-topbar">
         <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
@@ -313,7 +308,11 @@
       <h2 style="margin-top:18px;">最近 7 天</h2>
       <div id="recentList"></div>
     </div>
+
+    <div style="height:64px;"></div>
   </div>
+
+  <button class="btn fab-save" id="saveBtn" style="display:none;">儲存今天</button>
 
   <div id="tab-stats" style="display:none">
     <div class="card">
@@ -432,7 +431,7 @@
     </div>
   </div>
 
-  <p class="foot">記帳本 v3 · 今日輸入 / 歷史 / 統計 / 對帳 / 帳戶<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
+  <p class="foot">記帳本 v3 · 營業收入 / 統計 / 對帳 / 帳戶 / 支出<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
 
   <div class="quick-add-popup" id="quickAddPopup" style="display:none">
     <button type="button" id="quickAddIncomeBtn">💰 加一筆收入</button>
@@ -440,8 +439,7 @@
   </div>
 
   <div class="tabbar" id="tabbar">
-    <button type="button" class="tab-btn active" data-tab="today">今日輸入</button>
-    <button type="button" class="tab-btn" data-tab="history">歷史</button>
+    <button type="button" class="tab-btn active" data-tab="today">營業收入</button>
     <button type="button" class="tab-btn" data-tab="stats">統計</button>
     <button type="button" class="tab-btn-center" id="quickAddBtn" aria-label="快速新增">+</button>
     <button type="button" class="tab-btn" data-tab="recon">對帳</button>
@@ -550,7 +548,6 @@
       input.value = newTotal || '';
       input.placeholder = '0';
       delete addPending[id];
-      btn.textContent = '+';
       btn.classList.remove('confirm');
       updateLiveCalc();
     } else {
@@ -558,7 +555,6 @@
       input.value = '';
       input.placeholder = '輸入本趟金額';
       input.focus();
-      btn.textContent = '✓';
       btn.classList.add('confirm');
     }
   }
@@ -653,16 +649,22 @@
     updateEditBanner();
   }
 
-  var armedOldValue = {}; // id -> 聚焦前的值,失焦沒打字就還原,避免用原生 select() 觸發 iOS 選取控點
+  var freshFocus = {}; // id -> true 表示「剛聚焦,還沒打字」,第一個按鍵會把舊數字整個清掉再輸入,不用手動選取/刪除
 
   ids.forEach(function (id) {
     var el = document.getElementById(id);
     el.addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); });
     el.addEventListener('focus', function () {
       if (addPending.hasOwnProperty(id)) return; // 累加模式有自己的清空邏輯,不要疊加處理
-      armedOldValue[id] = this.value;
-      this.value = '';
+      freshFocus[id] = true; // 保留原本數字不變,只是標記「還沒打字」
       this.classList.add('armed');
+    });
+    el.addEventListener('keydown', function (e) {
+      if (!freshFocus[id]) return;
+      var isContentKey = e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete';
+      if (!isContentKey) return; // Tab/方向鍵等不算「開始輸入」,維持保留原數字的狀態
+      this.value = ''; // 第一個真正的輸入按鍵,把舊數字整個清掉,讓這個按鍵直接打進空欄位
+      delete freshFocus[id];
     });
     el.addEventListener('blur', function () {
       if (addPending.hasOwnProperty(id)) {
@@ -670,10 +672,7 @@
         return;
       }
       this.classList.remove('armed');
-      if (this.value === '' && armedOldValue.hasOwnProperty(id)) {
-        this.value = armedOldValue[id];
-      }
-      delete armedOldValue[id];
+      delete freshFocus[id];
       updateLiveCalc();
     });
     document.querySelector('.addbtn[data-target="' + id + '"]').addEventListener('click', function () {
@@ -949,14 +948,14 @@
   var currentTab = 'today';
   function switchTab(tab) {
     currentTab = tab;
-    ['today', 'history', 'stats', 'recon', 'accounts', 'expenses'].forEach(function (t) {
+    ['today', 'stats', 'recon', 'accounts', 'expenses'].forEach(function (t) {
       document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
     });
     document.getElementById('saveBtn').style.display = (tab === 'today') ? 'block' : 'none';
-    if (tab === 'history') renderCalendar();
+    if (tab === 'today') renderCalendar();
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); renderAccounts(); }
