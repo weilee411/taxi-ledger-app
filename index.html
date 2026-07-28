@@ -62,6 +62,15 @@
   .account-name { font-size: 15px; font-weight: 700; }
   .account-type-badge { font-size: 12px; color: var(--ink-muted); font-weight: 600; margin-left: 6px; }
   .account-balance { font-size: 15px; font-weight: 700; }
+  .detail-overlay { position: fixed; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100%; max-width: 480px; background: var(--bg); z-index: 30; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .detail-overlay-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(16px, env(safe-area-inset-top)) 16px 10px; position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  .detail-overlay-header span { font-size: 17px; font-weight: 700; flex: 1; text-align: center; }
+  .detail-tx-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px; border-bottom: 1px solid var(--border); cursor: pointer; gap: 10px; }
+  .detail-tx-row:last-child { border-bottom: none; }
+  .detail-tx-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; flex-shrink: 0; }
+  .detail-tx-badge.tx-income { background: rgba(47,143,91,.18); color: var(--income); }
+  .detail-tx-badge.tx-expense { background: rgba(181,80,47,.18); color: var(--expense); }
+  .detail-tx-badge.tx-transfer { background: rgba(169,122,38,.18); color: var(--pending); }
 
   details.recon-month { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
   details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; gap: 10px; }
@@ -109,7 +118,8 @@
   .btn.ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); font-weight: 600; font-size: 15px; padding: 10px; }
   .btn.small { padding: 8px 12px; font-size: 14px; width: auto; }
   .btn.saved { background: var(--income); }
-  .fab-save { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom) + 10px); z-index: 15; width: calc(100% - 32px); max-width: 448px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .fab-save-round { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 15; width: 52px; height: 52px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); font-size: 22px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); transition: background-color .15s ease; }
+  .fab-save-round.saved { background: var(--income); }
 
   .empty { text-align: center; font-size: 14px; color: var(--ink-muted); padding: 12px 0; }
 
@@ -197,6 +207,21 @@
     <button type="button" class="gearbtn" id="settingsBtn" aria-label="設定平台名稱">⚙</button>
   </div>
 
+  <div id="accountDetailOverlay" class="detail-overlay" style="display:none">
+    <div class="detail-overlay-header">
+      <button type="button" class="cal-nav" id="accountDetailBackBtn" aria-label="返回">‹</button>
+      <span id="accountDetailName">帳戶</span>
+      <button type="button" class="btn ghost small" id="accountDetailEditBtn">編輯帳戶</button>
+    </div>
+    <div class="hero" style="margin:0 16px 14px;">
+      <div class="k">餘額</div>
+      <div class="v tnum" id="accountDetailBalance">$0</div>
+    </div>
+    <div style="padding:0 16px 100px;">
+      <div id="accountDetailList"></div>
+    </div>
+  </div>
+
   <div class="card" id="settingsPanel" style="display:none">
     <h2>平台名稱設定</h2>
     <p class="settings-hint">改了以後,表單欄位跟下面的日曆都會換成新名稱;原始資料的欄位本身不受影響,不會弄丟舊紀錄。</p>
@@ -250,20 +275,6 @@
     </div>
 
     <div class="card">
-      <h2>工時記錄</h2>
-      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
-      <div class="punch-times">
-        <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
-        <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
-      </div>
-      <div class="stats" style="margin: 10px 0 0;">
-        <div class="stat"><div class="k" id="totalHoursLabel">今日總工時</div><div class="v tnum" id="totalHours">0.0</div></div>
-        <div class="stat"><div class="k">本週總工時</div><div class="v tnum" id="weekHours">0.0</div></div>
-        <div class="stat"><div class="k">本月總工時</div><div class="v tnum" id="monthHours">0.0</div></div>
-      </div>
-    </div>
-
-    <div class="card">
       <h2>568 平台派單</h2>
       <div class="field"><label id="label-cash568">568 現金</label><div class="inputgrp"><input type="text" inputmode="decimal" id="cash568" placeholder="0"><button type="button" class="addbtn" data-target="cash568">+</button></div></div>
       <div class="field"><label id="label-online568">568 綁定</label><div class="inputgrp"><input type="text" inputmode="decimal" id="online568" placeholder="0"><button type="button" class="addbtn" data-target="online568">+</button></div></div>
@@ -283,10 +294,6 @@
       <div class="field"><label id="label-yoxi">yoxi</label><div class="inputgrp"><input type="text" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
       <div class="field"><label id="label-direct">直客</label><div class="inputgrp"><input type="text" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
       <div class="field"><label id="label-other">其他</label><div class="inputgrp"><input type="text" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
-    </div>
-
-    <div class="warn-box">
-      ⚠ 沒有自動存檔:不管是直接打字還是用「+」累加,都要按下面的儲存按鈕才會真的存進去。存成功後按鈕會變綠色、顯示存檔時間;沒變色代表沒存到。
     </div>
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
@@ -312,9 +319,23 @@
     <div style="height:64px;"></div>
   </div>
 
-  <button class="btn fab-save" id="saveBtn" style="display:none;">儲存今天</button>
+  <button type="button" class="fab-save-round" id="saveBtn" style="display:none;" aria-label="儲存今天">✓</button>
 
   <div id="tab-stats" style="display:none">
+    <div class="card">
+      <h2>工時記錄</h2>
+      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
+      <div class="punch-times">
+        <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
+        <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
+      </div>
+      <div class="stats" style="margin: 10px 0 0;">
+        <div class="stat"><div class="k" id="totalHoursLabel">今日總工時</div><div class="v tnum" id="totalHours">0.0</div></div>
+        <div class="stat"><div class="k">本週總工時</div><div class="v tnum" id="weekHours">0.0</div></div>
+        <div class="stat"><div class="k">本月總工時</div><div class="v tnum" id="monthHours">0.0</div></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2>收入總覽</h2>
       <div class="seg-group" id="statsGranGroup">
@@ -430,10 +451,7 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2>轉帳紀錄</h2>
-      <div id="transferList"><p class="empty">還沒有記錄</p></div>
-    </div>
+    <p class="settings-hint">轉帳紀錄不會另外列清單,直接點上面的帳戶就可以看到那個帳戶收到/轉出的所有轉帳。</p>
 
     <button type="button" class="btn ghost small" id="goToIncomesBtn">→ 收入明細(個案請款/借款等非每日收入)</button>
   </div>
@@ -831,7 +849,7 @@
     if (!isToday) {
       document.getElementById('editingDateLabel').textContent = '正在編輯 ' + formatDateLabel(editingDate);
     }
-    document.getElementById('saveBtn').textContent = isToday ? '儲存今天' : ('儲存 ' + formatDateLabel(editingDate));
+    document.getElementById('saveBtn').setAttribute('aria-label', isToday ? '儲存今天' : ('儲存 ' + formatDateLabel(editingDate)));
   }
 
   function updateDeleteBtn() {
@@ -1008,11 +1026,7 @@
 
   function showSavedFeedback(isoTime) {
     savedFeedbackActive = true;
-    var btn = document.getElementById('saveBtn');
-    var t = new Date(isoTime);
-    var timeLabel = pad2(t.getHours()) + ':' + pad2(t.getMinutes()) + ':' + pad2(t.getSeconds());
-    btn.textContent = '✓ 已存 ' + timeLabel;
-    btn.classList.add('saved');
+    document.getElementById('saveBtn').classList.add('saved');
     if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) {} }
   }
 
@@ -1603,8 +1617,7 @@
           '<span><span class="account-name">' + acc.name + '</span><span class="account-type-badge">' + ACCOUNT_TYPE_LABEL[acc.type] + (currency !== 'TWD' ? '·' + currency : '') + (acc.archived ? '·已封存' : '') + '</span></span>' +
           '<span class="account-balance tnum">' + (currency !== 'TWD' ? currency + ' ' : '') + fmt(balance) + '</span>';
         row.addEventListener('click', function () {
-          loadAccountIntoForm(acc);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          showAccountDetail(acc.id);
         });
         container.appendChild(row);
       });
@@ -1615,6 +1628,85 @@
       .reduce(function (s, a) { var b = computeAccountBalance(a); return s + (a.type === 'credit' ? -b : b); }, 0);
     document.getElementById('accountsTotalBalance').textContent = fmt(total);
   }
+
+  // ---- 帳戶明細(點帳戶列跳全螢幕頁,合併顯示這個帳戶的支出/收入/轉帳) ----
+  var accountDetailId = null;
+
+  function showAccountDetail(accountId) {
+    accountDetailId = accountId;
+    renderAccountDetail();
+    document.getElementById('accountDetailOverlay').style.display = 'block';
+    document.getElementById('accountDetailOverlay').scrollTop = 0;
+  }
+
+  function renderAccountDetail() {
+    var acc = loadAccounts().find(function (a) { return a.id === accountDetailId; });
+    if (!acc) { document.getElementById('accountDetailOverlay').style.display = 'none'; return; }
+    var currency = acc.currency || 'TWD';
+    var balance = computeAccountBalance(acc);
+    document.getElementById('accountDetailName').textContent = acc.name;
+    var balEl = document.getElementById('accountDetailBalance');
+    balEl.textContent = (currency !== 'TWD' ? currency + ' ' : '') + fmt(balance);
+    balEl.className = 'v tnum ' + ((acc.type === 'credit' ? -balance : balance) < 0 ? 'neg' : 'pos');
+
+    var expCatLabels = loadCategoryLabels();
+    var incCatLabels = loadIncomeCategoryLabels();
+    var accountName = {};
+    loadAccounts().forEach(function (a) { accountName[a.id] = a.name; });
+
+    var items = [];
+    loadExpenses().forEach(function (e) {
+      if (e.accountId !== accountDetailId) return;
+      items.push({ date: e.date, type: 'expense', label: e.name, sub: expCatLabels[e.category] || e.category, amount: -e.amount, ref: e });
+    });
+    loadIncomes().forEach(function (i) {
+      if (i.accountId !== accountDetailId) return;
+      items.push({ date: i.date, type: 'income', label: i.name, sub: incCatLabels[i.category] || i.category, amount: i.amount, ref: i });
+    });
+    loadTransfers().forEach(function (t) {
+      if (t.fromAccountId === accountDetailId) {
+        items.push({ date: t.date, type: 'transfer', label: '轉出 → ' + (accountName[t.toAccountId] || '?'), sub: t.note || '', amount: -t.amount, ref: t });
+      }
+      if (t.toAccountId === accountDetailId) {
+        items.push({ date: t.date, type: 'transfer', label: '轉入 ← ' + (accountName[t.fromAccountId] || '?'), sub: t.note || '', amount: t.amount, ref: t });
+      }
+    });
+    items.sort(function (a, b) { return b.date.localeCompare(a.date); });
+
+    var container = document.getElementById('accountDetailList');
+    container.innerHTML = '';
+    if (!items.length) { container.innerHTML = '<p class="empty">這個帳戶還沒有任何紀錄</p>'; return; }
+    var badgeLabel = { expense: '支出', income: '收入', transfer: '轉帳' };
+    items.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'detail-tx-row';
+      row.innerHTML =
+        '<span class="detail-tx-badge tx-' + item.type + '">' + badgeLabel[item.type] + '</span>' +
+        '<span style="flex:1; min-width:0;"><span class="recent-date tnum">' + formatDateLabel(item.date) + ' ' + item.label + '</span>' +
+        (item.sub ? '<br><span style="font-size:12px; color:var(--ink-muted);">' + item.sub + '</span>' : '') + '</span>' +
+        '<span class="recent-amt tnum ' + (item.amount < 0 ? '' : '') + '" style="color:' + (item.amount < 0 ? 'var(--expense)' : 'var(--income)') + '">' + (item.amount < 0 ? '-' : '+') + fmt(Math.abs(item.amount)) + '</span>';
+      row.addEventListener('click', function () {
+        document.getElementById('accountDetailOverlay').style.display = 'none';
+        if (item.type === 'expense') { switchTab('expenses'); loadExpenseIntoForm(item.ref); }
+        else if (item.type === 'income') { switchTab('incomes'); loadIncomeIntoForm(item.ref); }
+        else { switchTab('accounts'); loadTransferIntoForm(item.ref); }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      container.appendChild(row);
+    });
+  }
+
+  document.getElementById('accountDetailBackBtn').addEventListener('click', function () {
+    document.getElementById('accountDetailOverlay').style.display = 'none';
+  });
+  document.getElementById('accountDetailEditBtn').addEventListener('click', function () {
+    var acc = loadAccounts().find(function (a) { return a.id === accountDetailId; });
+    document.getElementById('accountDetailOverlay').style.display = 'none';
+    if (!acc) return;
+    switchTab('accounts');
+    loadAccountIntoForm(acc);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // ---- 支出明細(逐筆記錄,獨立於「今日輸入」,可分類+可選帳戶) ----
   var EXPENSES_KEY = 'taxiLedgerExpenses';
@@ -1823,26 +1915,10 @@
   });
 
   function renderTransferList() {
-    var accounts = loadAccounts();
-    var accountName = {};
-    accounts.forEach(function (a) { accountName[a.id] = a.name; });
-    var transfers = loadTransfers().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
-    var container = document.getElementById('transferList');
-    container.innerHTML = '';
-    if (!transfers.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
-    transfers.forEach(function (tr) {
-      var sub = (accountName[tr.fromAccountId] || '?') + ' → ' + (accountName[tr.toAccountId] || '?') + (tr.note ? ' · ' + tr.note : '');
-      var row = document.createElement('div');
-      row.className = 'recent-item';
-      row.innerHTML =
-        '<span class="recent-date tnum">' + formatDateLabel(tr.date) + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
-        '<span class="recent-amt tnum">' + fmt(tr.amount) + '</span>';
-      row.addEventListener('click', function () {
-        loadTransferIntoForm(tr);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-      container.appendChild(row);
-    });
+    // 轉帳不再另外列清單,改成從「帳戶明細」頁看;如果明細頁剛好開著同一個帳戶,順便刷新
+    if (document.getElementById('accountDetailOverlay').style.display !== 'none' && accountDetailId) {
+      renderAccountDetail();
+    }
   }
 
   // ---- 收入明細(逐筆記錄,獨立於「今日輸入」的568/平台每日計算機,涵蓋個案請款/借款/歷史資料等) ----
