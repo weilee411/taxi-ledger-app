@@ -173,9 +173,12 @@
   .yoy-label-btn .yoy-label { text-decoration: underline dotted; text-underline-offset: 3px; }
   .yoy-label-btn .jump-overlay { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; padding: 0; margin: 0; cursor: pointer; }
 
-  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--surface); border-top: 1px solid var(--border); padding: 6px max(16px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); z-index: 20; max-width: 480px; margin: 0 auto; }
-  .tab-btn { flex: 1; background: none; border: none; padding: 10px 4px; font-size: 14px; font-weight: 700; color: var(--ink-muted); cursor: pointer; border-radius: 10px; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; background: var(--surface); border-top: 1px solid var(--border); padding: 6px max(16px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right)); z-index: 20; max-width: 480px; margin: 0 auto; }
+  .tab-btn { flex: 1; min-width: 0; background: none; border: none; padding: 10px 2px; font-size: 12.5px; font-weight: 700; color: var(--ink-muted); cursor: pointer; border-radius: 10px; white-space: nowrap; }
   .tab-btn.active { color: var(--accent); background: var(--surface-alt); }
+  .tab-btn-center { flex-shrink: 0; width: 52px; height: 52px; margin: -22px 6px 0; border-radius: 50%; border: 4px solid var(--bg); background: var(--accent); color: var(--accent-ink); font-size: 28px; font-weight: 700; line-height: 1; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.3); }
+  .quick-add-popup { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 21; display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+  .quick-add-popup button { white-space: nowrap; padding: 12px 22px; border-radius: 10px; border: none; background: var(--surface-alt); color: var(--ink); font-size: 15px; font-weight: 700; cursor: pointer; }
 
   .foot { text-align:center; font-size: 12px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
 </style>
@@ -207,6 +210,20 @@
     <div style="display:flex; gap:8px; margin-top:14px;">
       <button type="button" class="btn ghost small" id="settingsCancelBtn" style="flex:1">取消</button>
       <button type="button" class="btn small" id="settingsSaveBtn" style="flex:1">儲存名稱</button>
+    </div>
+
+    <div style="border-top:1px solid var(--border); margin:16px 0 0; padding-top:14px;">
+      <h2>支出分類設定</h2>
+      <div class="field settings-row"><label>分類 1(預設:加油)</label><input type="text" id="set-cat-fuel" maxlength="10"></div>
+      <div class="field settings-row"><label>分類 2(預設:停車過路)</label><input type="text" id="set-cat-parking" maxlength="10"></div>
+      <div class="field settings-row"><label>分類 3(預設:保養維修)</label><input type="text" id="set-cat-maintenance" maxlength="10"></div>
+      <div class="field settings-row"><label>分類 4(預設:通訊網路)</label><input type="text" id="set-cat-telecom" maxlength="10"></div>
+      <div class="field settings-row"><label>分類 5(預設:飲食)</label><input type="text" id="set-cat-food" maxlength="10"></div>
+      <div class="field settings-row"><label>分類 6(預設:其他)</label><input type="text" id="set-cat-other" maxlength="10"></div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button type="button" class="btn ghost small" id="catSettingsCancelBtn" style="flex:1">取消</button>
+        <button type="button" class="btn small" id="catSettingsSaveBtn" style="flex:1">儲存分類名稱</button>
+      </div>
     </div>
 
     <div style="border-top:1px solid var(--border); margin:16px 0 0; padding-top:14px;">
@@ -395,12 +412,38 @@
     </div>
   </div>
 
+  <div id="tab-expenses" style="display:none">
+    <div class="card">
+      <h2 id="expenseFormTitle">新增支出</h2>
+      <div class="recon-field"><label for="expenseDate">日期</label><input type="date" id="expenseDate"></div>
+      <div class="recon-field"><label for="expenseName">品名</label><input type="text" id="expenseName" maxlength="20" placeholder="例如:晚餐"></div>
+      <div class="recon-field"><label for="expenseAmount">金額</label><input type="text" inputmode="decimal" id="expenseAmount" placeholder="0"></div>
+      <div class="recon-field"><label for="expenseCategorySelect">分類</label><select id="expenseCategorySelect"></select></div>
+      <div class="recon-field"><label for="expenseAccountSelect">帳戶</label><select id="expenseAccountSelect"></select></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" id="expenseSaveBtn" style="flex:1">儲存這筆支出</button>
+        <button type="button" class="btn ghost small" id="expenseDeleteBtn" style="display:none;">刪除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>支出紀錄</h2>
+      <div id="expenseList"><p class="empty">還沒有記錄</p></div>
+    </div>
+  </div>
+
   <p class="foot">記帳本 v3 · 今日輸入 / 歷史 / 統計 / 對帳 / 帳戶<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
+
+  <div class="quick-add-popup" id="quickAddPopup" style="display:none">
+    <button type="button" id="quickAddIncomeBtn">💰 加一筆收入</button>
+    <button type="button" id="quickAddExpenseBtn">🧾 加一筆支出</button>
+  </div>
 
   <div class="tabbar" id="tabbar">
     <button type="button" class="tab-btn active" data-tab="today">今日輸入</button>
     <button type="button" class="tab-btn" data-tab="history">歷史</button>
     <button type="button" class="tab-btn" data-tab="stats">統計</button>
+    <button type="button" class="tab-btn-center" id="quickAddBtn" aria-label="快速新增">+</button>
     <button type="button" class="tab-btn" data-tab="recon">對帳</button>
     <button type="button" class="tab-btn" data-tab="accounts">帳戶</button>
   </div>
@@ -411,6 +454,27 @@
   var LABELS_KEY = 'taxiLedgerLabels';
   var ids = ['cash568','online568','uber','bolt','yoxi','direct','other'];
   var DEFAULT_LABELS = { cash568:'568 現金', online568:'568 綁定', uber:'Uber', bolt:'Bolt', yoxi:'yoxi', direct:'直客', other:'其他' };
+  var CATEGORY_IDS = ['fuel','parking','maintenance','telecom','food','other'];
+  var CATEGORY_LABELS_KEY = 'taxiLedgerExpenseCategoryLabels';
+  var DEFAULT_CATEGORY_LABELS = { fuel:'加油', parking:'停車過路', maintenance:'保養維修', telecom:'通訊網路', food:'飲食', other:'其他' };
+
+  function loadCategoryLabels() {
+    var merged = {};
+    var saved = {};
+    try {
+      var raw = localStorage.getItem(CATEGORY_LABELS_KEY);
+      saved = raw ? JSON.parse(raw) : {};
+    } catch (e) { saved = {}; }
+    CATEGORY_IDS.forEach(function (k) {
+      var v = saved[k];
+      merged[k] = (typeof v === 'string' && v.trim()) ? v.trim() : DEFAULT_CATEGORY_LABELS[k];
+    });
+    return merged;
+  }
+
+  function saveCategoryLabels(obj) {
+    localStorage.setItem(CATEGORY_LABELS_KEY, JSON.stringify(obj));
+  }
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -822,6 +886,8 @@
   document.getElementById('settingsBtn').addEventListener('click', function () {
     var current = loadLabels();
     ids.forEach(function (k) { document.getElementById('set-' + k).value = current[k]; });
+    var currentCat = loadCategoryLabels();
+    CATEGORY_IDS.forEach(function (k) { document.getElementById('set-cat-' + k).value = currentCat[k]; });
     settingsPanel.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -836,6 +902,18 @@
     });
     saveLabels(updated);
     applyLabels();
+    settingsPanel.style.display = 'none';
+  });
+  document.getElementById('catSettingsCancelBtn').addEventListener('click', function () {
+    settingsPanel.style.display = 'none';
+  });
+  document.getElementById('catSettingsSaveBtn').addEventListener('click', function () {
+    var updated = {};
+    CATEGORY_IDS.forEach(function (k) {
+      var v = document.getElementById('set-cat-' + k).value.trim();
+      updated[k] = v || DEFAULT_CATEGORY_LABELS[k];
+    });
+    saveCategoryLabels(updated);
     settingsPanel.style.display = 'none';
   });
 
@@ -871,7 +949,7 @@
   var currentTab = 'today';
   function switchTab(tab) {
     currentTab = tab;
-    ['today', 'history', 'stats', 'recon', 'accounts'].forEach(function (t) {
+    ['today', 'history', 'stats', 'recon', 'accounts', 'expenses'].forEach(function (t) {
       document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -882,10 +960,31 @@
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); renderAccounts(); }
+    if (tab === 'expenses') { resetExpenseForm(); renderExpenseList(); }
     window.scrollTo({ top: 0, behavior: 'instant' in window.scrollTo ? 'instant' : 'auto' });
   }
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
+  });
+
+  // ---- 底部中間「+」快速新增(收入/支出二選一) ----
+  var quickAddPopup = document.getElementById('quickAddPopup');
+  document.getElementById('quickAddBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    quickAddPopup.style.display = (quickAddPopup.style.display === 'flex') ? 'none' : 'flex';
+  });
+  document.getElementById('quickAddIncomeBtn').addEventListener('click', function () {
+    quickAddPopup.style.display = 'none';
+    switchTab('today');
+  });
+  document.getElementById('quickAddExpenseBtn').addEventListener('click', function () {
+    quickAddPopup.style.display = 'none';
+    switchTab('expenses');
+  });
+  document.addEventListener('click', function (e) {
+    if (quickAddPopup.style.display === 'flex' && !quickAddPopup.contains(e.target)) {
+      quickAddPopup.style.display = 'none';
+    }
   });
 
   // ---- 收入總覽(天/週/月/年,單一可導覽期間) ----
@@ -1301,7 +1400,14 @@
     var deposited = loadDeposits()
       .filter(function (d) { return d.accountId === account.id; })
       .reduce(function (s, d) { return s + (d.amount || 0); }, 0);
-    return (account.initialBalance || 0) + deposited;
+    var spent = loadExpenses()
+      .filter(function (e) { return e.accountId === account.id; })
+      .reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+    if (account.type === 'credit') {
+      // 信用帳戶:餘額代表「目前欠多少」,消費會累加,還沒有繳款/連動現金帳戶的機制(留給之後的「信用帳戶」階段)
+      return (account.initialBalance || 0) + spent;
+    }
+    return (account.initialBalance || 0) + deposited - spent;
   }
 
   function resetAccountForm() {
@@ -1395,9 +1501,131 @@
         container.appendChild(row);
       });
     }
+    // 信用帳戶餘額代表「欠多少」,是負債不是資產,算總餘額(淨值)時要用減的,不能直接加
     var total = accounts.filter(function (a) { return a.includeInTotal !== false && !a.archived; })
-      .reduce(function (s, a) { return s + computeAccountBalance(a); }, 0);
+      .reduce(function (s, a) { var b = computeAccountBalance(a); return s + (a.type === 'credit' ? -b : b); }, 0);
     document.getElementById('accountsTotalBalance').textContent = fmt(total);
+  }
+
+  // ---- 支出明細(逐筆記錄,獨立於「今日輸入」,可分類+可選帳戶) ----
+  var EXPENSES_KEY = 'taxiLedgerExpenses';
+  var editingExpenseId = null;
+
+  function loadExpenses() {
+    try {
+      var raw = localStorage.getItem(EXPENSES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveExpensesList(arr) {
+    localStorage.setItem(EXPENSES_KEY, JSON.stringify(arr));
+  }
+
+  function populateExpenseCategorySelect(selectedCategory) {
+    var sel = document.getElementById('expenseCategorySelect');
+    sel.innerHTML = '';
+    var labels = loadCategoryLabels();
+    CATEGORY_IDS.forEach(function (id) {
+      var opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = labels[id];
+      sel.appendChild(opt);
+    });
+    sel.value = selectedCategory || CATEGORY_IDS[0];
+  }
+
+  function populateExpenseAccountSelect(selectedAccountId) {
+    var sel = document.getElementById('expenseAccountSelect');
+    sel.innerHTML = '';
+    var noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = '— 未指定帳戶 —';
+    sel.appendChild(noneOpt);
+    loadAccounts().filter(function (a) { return !a.archived; }).forEach(function (a) {
+      var opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name + '(' + ACCOUNT_TYPE_LABEL[a.type] + ')';
+      sel.appendChild(opt);
+    });
+    sel.value = selectedAccountId || '';
+  }
+
+  function resetExpenseForm() {
+    editingExpenseId = null;
+    document.getElementById('expenseDate').value = todayKey();
+    document.getElementById('expenseName').value = '';
+    document.getElementById('expenseAmount').value = '';
+    populateExpenseCategorySelect('');
+    populateExpenseAccountSelect('');
+    document.getElementById('expenseFormTitle').textContent = '新增支出';
+    document.getElementById('expenseSaveBtn').textContent = '儲存這筆支出';
+    document.getElementById('expenseDeleteBtn').style.display = 'none';
+  }
+
+  function loadExpenseIntoForm(exp) {
+    editingExpenseId = exp.id;
+    document.getElementById('expenseDate').value = exp.date;
+    document.getElementById('expenseName').value = exp.name;
+    document.getElementById('expenseAmount').value = exp.amount;
+    populateExpenseCategorySelect(exp.category);
+    populateExpenseAccountSelect(exp.accountId);
+    document.getElementById('expenseFormTitle').textContent = '編輯這筆支出';
+    document.getElementById('expenseSaveBtn').textContent = '更新這筆支出';
+    document.getElementById('expenseDeleteBtn').style.display = 'block';
+  }
+
+  document.getElementById('expenseSaveBtn').addEventListener('click', function () {
+    var date = document.getElementById('expenseDate').value;
+    var name = document.getElementById('expenseName').value.trim();
+    var amount = parseFloat(document.getElementById('expenseAmount').value);
+    var category = document.getElementById('expenseCategorySelect').value;
+    var accountId = document.getElementById('expenseAccountSelect').value;
+    if (!date || !name || isNaN(amount)) { alert('請輸入日期、品名跟金額'); return; }
+    var expenses = loadExpenses();
+    if (editingExpenseId) {
+      expenses = expenses.map(function (e) {
+        return e.id === editingExpenseId ? { id: e.id, date: date, name: name, amount: amount, category: category, accountId: accountId } : e;
+      });
+    } else {
+      expenses.push({ id: 'e' + Date.now(), date: date, name: name, amount: amount, category: category, accountId: accountId });
+    }
+    saveExpensesList(expenses);
+    resetExpenseForm();
+    renderExpenseList();
+  });
+
+  document.getElementById('expenseDeleteBtn').addEventListener('click', function () {
+    if (!editingExpenseId) return;
+    if (!confirm('刪除這筆支出紀錄?')) return;
+    var expenses = loadExpenses().filter(function (e) { return e.id !== editingExpenseId; });
+    saveExpensesList(expenses);
+    resetExpenseForm();
+    renderExpenseList();
+  });
+
+  function renderExpenseList() {
+    var labels = loadCategoryLabels();
+    var accounts = loadAccounts();
+    var accountName = {};
+    accounts.forEach(function (a) { accountName[a.id] = a.name; });
+    var expenses = loadExpenses().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var container = document.getElementById('expenseList');
+    container.innerHTML = '';
+    if (!expenses.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
+    expenses.forEach(function (exp) {
+      var sub = (labels[exp.category] || exp.category) + (exp.accountId && accountName[exp.accountId] ? ' · ' + accountName[exp.accountId] : '');
+      var row = document.createElement('div');
+      row.className = 'recent-item';
+      row.innerHTML =
+        '<span class="recent-date tnum">' + formatDateLabel(exp.date) + ' ' + exp.name + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
+        '<span class="recent-amt tnum">' + fmt(exp.amount) + '</span>';
+      row.addEventListener('click', function () {
+        loadExpenseIntoForm(exp);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      container.appendChild(row);
+    });
   }
 
   // ---- 資料備份(匯出/匯入,合併不覆蓋) ----
@@ -1407,6 +1635,8 @@
     data[LABELS_KEY] = loadLabels();
     data[RECON_KEY] = loadDeposits();
     data[ACCOUNTS_KEY] = loadAccounts();
+    data[EXPENSES_KEY] = loadExpenses();
+    data[CATEGORY_LABELS_KEY] = loadCategoryLabels();
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -1450,6 +1680,13 @@
           data[ACCOUNTS_KEY].forEach(function (a) { byAccId[a.id] = a; });
           saveAccountsList(Object.keys(byAccId).map(function (k) { return byAccId[k]; }));
         }
+        if (Array.isArray(data[EXPENSES_KEY])) {
+          var byExpId = {};
+          loadExpenses().forEach(function (e) { byExpId[e.id] = e; });
+          data[EXPENSES_KEY].forEach(function (e) { byExpId[e.id] = e; });
+          saveExpensesList(Object.keys(byExpId).map(function (k) { return byExpId[k]; }));
+        }
+        if (data[CATEGORY_LABELS_KEY]) { saveCategoryLabels(data[CATEGORY_LABELS_KEY]); }
         if (data[LABELS_KEY]) { saveLabels(data[LABELS_KEY]); }
         applyLabels();
         loadDateIntoForm(editingDate);
