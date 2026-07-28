@@ -41,14 +41,15 @@
   .field label { font-size: 16px; font-weight: 600; flex: 1; }
   .field input { width: 120px; text-align: right; font-size: 18px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); font-variant-numeric: tabular-nums; }
   .field input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  input[type="text"][inputmode="decimal"]::selection { background: transparent; color: inherit; }
+  input[type="text"][inputmode="decimal"].armed { background: rgba(43,106,120,.16); }
+  @media (prefers-color-scheme: dark) { input[type="text"][inputmode="decimal"].armed { background: rgba(107,184,199,.22); } }
   .field input[type="time"] { width: 120px; }
   .field.settings-row input[type="text"] { width: 150px; text-align: left; font-variant-numeric: normal; }
 
   .punch-times { display: flex; gap: 8px; margin: 10px 0; }
-  .punch-time-col { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
-  .punch-time-label { font-size: 13px; color: var(--ink-muted); font-weight: 600; }
-  .punch-time-col input { border: none; background: transparent; padding: 0; width: auto; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .punch-time-col { flex: 1; display: flex; flex-direction: column; gap: 4px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+  .punch-time-label { font-size: 12px; color: var(--ink-muted); font-weight: 600; white-space: nowrap; }
+  .punch-time-col input { border: none; background: transparent; padding: 0; width: 100%; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
   .btn.punch-active { background: var(--pending); }
 
   .recon-field { margin-bottom: 10px; min-width: 0; overflow: hidden; }
@@ -57,24 +58,25 @@
   .recon-field input[type="date"] { min-width: 0; }
 
   details.recon-month { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
-  details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; }
+  details.recon-month > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 16px; gap: 10px; }
   details.recon-month > summary::-webkit-details-marker { display: none; }
-  details.recon-month > summary .chev { color: var(--ink-muted); font-size: 13px; transition: transform .15s ease; }
-  details.recon-month[open] > summary .chev { transform: rotate(180deg); }
+  .chev-badge { flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; transition: transform .15s ease; }
+  details[open] > summary .chev-badge { transform: rotate(180deg); }
   .recon-mini-stats { display: flex; gap: 14px; padding: 0 16px 12px; font-size: 13px; color: var(--ink-muted); flex-wrap: wrap; }
   .recon-mini-stats b { color: var(--ink); font-weight: 700; }
-  details.recon-week { border-top: 1px solid var(--border); }
-  details.recon-week > summary { list-style: none; cursor: pointer; padding: 10px 16px; font-size: 14px; font-weight: 700; background: var(--surface-alt); display: flex; justify-content: space-between; align-items: center; }
+  details.recon-week { border: 2px solid var(--border); border-radius: 14px; margin: 10px 12px; overflow: hidden; }
+  details.recon-week > summary { list-style: none; cursor: pointer; padding: 12px 14px; font-size: 15px; font-weight: 700; background: var(--surface-alt); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   details.recon-week > summary::-webkit-details-marker { display: none; }
-  details.recon-week > summary .chev { color: var(--ink-muted); font-size: 13px; transition: transform .15s ease; }
-  details.recon-week[open] > summary .chev { transform: rotate(180deg); }
   details.recon-week .recon-mini-stats { background: var(--surface-alt); padding-top: 2px; }
-  .recon-day-list { padding: 4px 16px 10px; }
-  .recon-day-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .recon-day-list { padding: 4px 14px 10px; }
+  .recon-head-row { display: grid; grid-template-columns: 58px 1fr 1fr 1fr; gap: 6px; padding: 6px 0 8px; font-size: 11px; color: var(--ink-muted); font-weight: 700; border-bottom: 2px solid var(--border); text-align: right; }
+  .recon-head-row span:first-child { text-align: left; }
+  .recon-day-row { display: grid; grid-template-columns: 58px 1fr 1fr 1fr; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
   .recon-day-row:last-child { border-bottom: none; }
-  .recon-day-date { width: 52px; color: var(--ink-muted); flex-shrink: 0; }
-  .recon-day-col { flex: 1; text-align: right; color: var(--ink-muted); }
+  .recon-day-date { color: var(--ink-muted); flex-shrink: 0; text-align: left; white-space: nowrap; }
+  .recon-day-col { text-align: right; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
   .recon-day-col.strong { color: var(--ink); font-weight: 700; }
+  .recon-platform-select { width: 100%; font-size: 16px; font-weight: 700; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); margin-bottom: 10px; }
 
   .inputgrp { display: flex; align-items: center; gap: 6px; }
   .inputgrp input { width: 100px; }
@@ -101,6 +103,7 @@
   .btn.ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); font-weight: 600; font-size: 15px; padding: 10px; }
   .btn.small { padding: 8px 12px; font-size: 14px; width: auto; }
   .btn.saved { background: var(--income); }
+  .fab-save { position: fixed; left: 16px; right: 16px; bottom: calc(70px + env(safe-area-inset-bottom) + 10px); z-index: 15; max-width: 448px; margin: 0 auto; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
 
   .empty { text-align: center; font-size: 14px; color: var(--ink-muted); padding: 12px 0; }
 
@@ -118,8 +121,7 @@
   .cal-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
   .cal-nav { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--accent); font-size: 20px; font-weight: 700; cursor: pointer; }
   .cal-mid { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .cal-month-label { font-size: 17px; font-weight: 700; white-space: nowrap; }
-  .cal-jump { font-size: 13px; padding: 6px 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); width: 118px; }
+  .cal-month-label { font-size: 17px; font-weight: 700; white-space: nowrap; text-decoration: underline dotted; text-underline-offset: 3px; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cal-head { text-align: center; font-size: 12px; color: var(--ink-muted); font-weight: 700; padding: 2px 0 6px; }
   .cal-cell { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 15px; font-variant-numeric: tabular-nums; cursor: pointer; background: var(--surface-alt); }
@@ -228,12 +230,13 @@
       <h2>工時記錄</h2>
       <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
       <div class="punch-times">
-        <div class="punch-time-col"><span class="punch-time-label">上線</span><input type="time" id="startTime"></div>
-        <div class="punch-time-col"><span class="punch-time-label">收工</span><input type="time" id="endTime"></div>
+        <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
+        <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
       </div>
-      <div class="hero">
-        <div class="k">總工時</div>
-        <div class="v tnum" id="totalHours">0.0</div>
+      <div class="stats" style="margin: 10px 0 0;">
+        <div class="stat"><div class="k" id="totalHoursLabel">今日總工時</div><div class="v tnum" id="totalHours">0.0</div></div>
+        <div class="stat"><div class="k">本週總工時</div><div class="v tnum" id="weekHours">0.0</div></div>
+        <div class="stat"><div class="k">本月總工時</div><div class="v tnum" id="monthHours">0.0</div></div>
       </div>
     </div>
 
@@ -263,9 +266,11 @@
       ⚠ 沒有自動存檔:不管是直接打字還是用「+」累加,都要按下面的儲存按鈕才會真的存進去。存成功後按鈕會變綠色、顯示存檔時間;沒變色代表沒存到。
     </div>
 
-    <button class="btn" id="saveBtn">儲存今天</button>
-    <button class="btn ghost small" id="deleteDayBtn" style="display:none; margin-top:8px;">🗑 刪除這天的紀錄</button>
+    <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
+    <div style="height:64px;"></div>
   </div>
+
+  <button class="btn fab-save" id="saveBtn" style="display:none;">儲存今天</button>
 
   <div id="tab-history" style="display:none">
     <div class="card">
@@ -273,8 +278,10 @@
       <div class="cal-topbar">
         <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
         <div class="cal-mid">
-          <span class="cal-month-label" id="calMonthLabel"></span>
-          <input type="date" class="cal-jump" id="calJumpDate" aria-label="跳到日期">
+          <label class="yoy-label-btn" for="calJumpDate">
+            <span class="cal-month-label" id="calMonthLabel"></span>
+            <input type="date" class="jump-overlay" id="calJumpDate" aria-label="跳到日期">
+          </label>
         </div>
         <button type="button" class="cal-nav" id="calNextBtn" aria-label="下個月">›</button>
       </div>
@@ -289,28 +296,23 @@
     <div class="card">
       <h2>收入總覽</h2>
       <div class="seg-group" id="statsGranGroup">
+        <button type="button" class="seg-btn" data-gran="day">天</button>
         <button type="button" class="seg-btn active" data-gran="week">週</button>
         <button type="button" class="seg-btn" data-gran="month">月</button>
         <button type="button" class="seg-btn" data-gran="year">年</button>
       </div>
-      <div class="yoy-row" style="margin-top:12px;">
-        <div class="yoy-col">
-          <div class="yoy-label" id="statsCurLabel"></div>
-          <div class="yoy-value tnum" id="statsCurTotal">$0</div>
-        </div>
-        <div class="yoy-col">
-          <div class="yoy-nav">
-            <button type="button" class="cal-nav small" id="statsCmpPrevBtn" aria-label="對照上一期">‹</button>
-            <label class="yoy-label-btn" for="statsCmpJumpDate">
-              <span class="yoy-label" id="statsCmpLabel"></span>
-              <input type="date" id="statsCmpJumpDate" class="jump-overlay" aria-label="跳到指定週/月/年">
-            </label>
-            <button type="button" class="cal-nav small" id="statsCmpNextBtn" aria-label="對照下一期">›</button>
-          </div>
-          <div class="yoy-value tnum" id="statsCmpTotal">$0</div>
-        </div>
+      <div class="yoy-nav" style="margin-top:12px;">
+        <button type="button" class="cal-nav small" id="statsPrevBtn" aria-label="上一期">‹</button>
+        <label class="yoy-label-btn" for="statsJumpDate">
+          <span class="yoy-label" id="statsCurLabel"></span>
+          <input type="date" id="statsJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月/年">
+        </label>
+        <button type="button" class="cal-nav small" id="statsNextBtn" aria-label="下一期">›</button>
       </div>
-      <p class="stats-delta" id="statsDelta"></p>
+      <div class="hero" style="margin-top:12px;">
+        <div class="k">收入</div>
+        <div class="v tnum" id="statsCurTotal">$0</div>
+      </div>
     </div>
 
     <div class="card">
@@ -322,10 +324,11 @@
 
   <div id="tab-recon" style="display:none">
     <div class="card">
-      <h2>568 對帳</h2>
-      <p class="settings-hint">逐日累加,不配對——應收金額自動從「568 派單卡」帶入,只需要記銀行實際入帳。</p>
+      <h2>對帳</h2>
+      <select class="recon-platform-select" id="reconPlatformSelect"></select>
+      <p class="settings-hint" id="reconIntro">逐日累加,不配對——預估入帳金額自動從「今日輸入」帶入,只需要記銀行實際入帳。</p>
       <div class="hero">
-        <div class="k">未收金額</div>
+        <div class="k">尚未入帳</div>
         <div class="v tnum" id="reconOutstanding">$0</div>
       </div>
     </div>
@@ -518,6 +521,23 @@
     var start = document.getElementById('startTime').value;
     var end = document.getElementById('endTime').value;
     document.getElementById('totalHours').textContent = calcHours(start, end).toFixed(1);
+    document.getElementById('totalHoursLabel').textContent =
+      (editingDate === todayKey()) ? '今日總工時' : (formatDateLabel(editingDate) + ' 總工時');
+
+    var allDays = loadDays();
+    var wk = getWeekRange(new Date());
+    var mo = getMonthRange(new Date());
+    document.getElementById('weekHours').textContent = sumHoursInRange(allDays, wk.start, wk.end).toFixed(1);
+    document.getElementById('monthHours').textContent = sumHoursInRange(allDays, mo.start, mo.end).toFixed(1);
+  }
+
+  function sumHoursInRange(days, start, end) {
+    var startStr = formatDateStr(start), endStr = formatDateStr(end);
+    var sum = 0;
+    days.forEach(function (d) {
+      if (d.date >= startStr && d.date <= endStr) sum += calcHours(d.startTime, d.endTime);
+    });
+    return Math.round(sum * 10) / 10;
   }
 
   function clearSavedFeedback() {
@@ -527,21 +547,31 @@
     updateEditBanner();
   }
 
+  var armedOldValue = {}; // id -> 聚焦前的值,失焦沒打字就還原,避免用原生 select() 觸發 iOS 選取控點
+
   ids.forEach(function (id) {
     var el = document.getElementById(id);
     el.addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); });
     el.addEventListener('focus', function () {
-      // 點進欄位就整格選取,直接打字會覆蓋舊數字,不用自己刪
-      var input = this;
-      setTimeout(function () { input.select(); }, 0);
+      if (addPending.hasOwnProperty(id)) return; // 累加模式有自己的清空邏輯,不要疊加處理
+      armedOldValue[id] = this.value;
+      this.value = '';
+      this.classList.add('armed');
     });
-    el.addEventListener('mouseup', function (e) {
-      // 手機點擊時,瀏覽器預設會把游標放在點到的字元位置、蓋掉上面 focus 選取的效果
-      // 這裡在 mouseup(觸控裝置會模擬出這個事件)擋掉預設動作,確保整格維持選取狀態
-      e.preventDefault();
-      this.select();
+    el.addEventListener('blur', function () {
+      if (addPending.hasOwnProperty(id)) {
+        toggleAddMode(id); // 點旁邊空白處(失焦)自動確認這筆累加,不用特地點 ✓
+        return;
+      }
+      this.classList.remove('armed');
+      if (this.value === '' && armedOldValue.hasOwnProperty(id)) {
+        this.value = armedOldValue[id];
+      }
+      delete armedOldValue[id];
+      updateLiveCalc();
     });
     document.querySelector('.addbtn[data-target="' + id + '"]').addEventListener('click', function () {
+      if (addPending.hasOwnProperty(id)) return; // 已在累加模式,失焦時會自動確認
       clearSavedFeedback();
       toggleAddMode(id);
     });
@@ -582,10 +612,11 @@
       startEl.value = '';
       endEl.value = '';
     }
-    clearSavedFeedback();
     updateLiveCalc();
     updatePunchButtonState();
     if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
+    var entry = persistCurrentEntry(); // 打卡三個動作(上班/下班/重置)都直接存檔,不用再手動按儲存
+    showSavedFeedback(entry.savedAt);
   });
 
   function formatDateLabel(dateStr) {
@@ -645,6 +676,7 @@
   function renderCalendar() {
     var year = calViewDate.getFullYear(), month = calViewDate.getMonth();
     document.getElementById('calMonthLabel').textContent = year + ' 年 ' + (month + 1) + ' 月';
+    document.getElementById('calJumpDate').value = year + '-' + pad2(month + 1) + '-01';
 
     var days = loadDays();
     document.getElementById('dayCount').textContent = days.length;
@@ -775,7 +807,7 @@
     if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) {} }
   }
 
-  document.getElementById('saveBtn').addEventListener('click', function () {
+  function persistCurrentEntry() {
     confirmPendingAdds();
     var entry = { date: editingDate, savedAt: new Date().toISOString() };
     ids.forEach(function (id) { entry[id] = num(id); });
@@ -786,7 +818,11 @@
     saveDays(days);
     updateDeleteBtn();
     renderCalendar();
-    showSavedFeedback(entry.savedAt);
+    return entry;
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    showSavedFeedback(persistCurrentEntry().savedAt);
   });
 
   // ---- 分頁籤切換 ----
@@ -799,6 +835,7 @@
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
     });
+    document.getElementById('saveBtn').style.display = (tab === 'today') ? 'block' : 'none';
     if (tab === 'history') renderCalendar();
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
@@ -808,10 +845,14 @@
     btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
   });
 
-  // ---- 收入總覽(週/月/年,左邊固定本期,右邊自由對照) ----
+  // ---- 收入總覽(天/週/月/年,單一可導覽期間) ----
   var statsGranularity = 'week';
-  var statsCmpRefDate = defaultCmpRefDate(statsGranularity); // 對照格自己的導覽位置,預設「上一期」
+  var statsRefDate = new Date(); // 目前導覽到哪一期,預設「本期」(含今天)
 
+  function getDayRange(date) {
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return { start: d, end: d };
+  }
   function getWeekRange(date) {
     var day = date.getDay(); // 0=Sun..6=Sat
     var mondayOffset = (day === 0) ? 6 : day - 1;
@@ -832,18 +873,14 @@
     };
   }
   function computeRange(gran, refDate) {
+    if (gran === 'day') return getDayRange(refDate);
     if (gran === 'week') return getWeekRange(refDate);
     if (gran === 'month') return getMonthRange(refDate);
     return getYearRange(refDate);
   }
-  function defaultCmpRefDate(gran) {
-    var now = new Date();
-    if (gran === 'week') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-    if (gran === 'month') return new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return new Date(now.getFullYear() - 1, 0, 1);
-  }
   function formatMD(date) { return (date.getMonth() + 1) + '/' + date.getDate(); }
   function formatRangeLabel(gran, range) {
+    if (gran === 'day') return range.start.getFullYear() + '年' + formatMD(range.start);
     if (gran === 'week') return formatMD(range.start) + ' ~ ' + formatMD(range.end);
     if (gran === 'month') return range.start.getFullYear() + '年' + (range.start.getMonth() + 1) + '月';
     return range.start.getFullYear() + '年';
@@ -856,8 +893,8 @@
     });
     return sum;
   }
-  function isCmpAtLatestPeriod() {
-    var range = computeRange(statsGranularity, statsCmpRefDate);
+  function isAtLatestPeriod() {
+    var range = computeRange(statsGranularity, statsRefDate);
     return formatDateStr(range.end) >= todayKey();
   }
 
@@ -892,29 +929,15 @@
 
   function renderStats() {
     var days = loadDays();
-    var curRange = computeRange(statsGranularity, new Date()); // 左邊固定「本期」,不受對照格導覽影響
-    var cmpRange = computeRange(statsGranularity, statsCmpRefDate);
-    var curSum = sumIncomeInRange(days, curRange.start, curRange.end);
-    var cmpSum = sumIncomeInRange(days, cmpRange.start, cmpRange.end);
-    var delta = curSum - cmpSum;
+    var range = computeRange(statsGranularity, statsRefDate);
+    var sum = sumIncomeInRange(days, range.start, range.end);
 
-    document.getElementById('statsCurLabel').textContent = formatRangeLabel(statsGranularity, curRange);
-    document.getElementById('statsCurTotal').textContent = fmt(curSum);
-    document.getElementById('statsCmpLabel').textContent = formatRangeLabel(statsGranularity, cmpRange);
-    document.getElementById('statsCmpTotal').textContent = fmt(cmpSum);
-    document.getElementById('statsCmpJumpDate').value = formatDateStr(cmpRange.start);
+    document.getElementById('statsCurLabel').textContent = formatRangeLabel(statsGranularity, range);
+    document.getElementById('statsCurTotal').textContent = fmt(sum);
+    document.getElementById('statsJumpDate').value = formatDateStr(range.start);
 
-    var deltaEl = document.getElementById('statsDelta');
-    if (delta === 0) {
-      deltaEl.textContent = '兩期打平';
-      deltaEl.className = 'stats-delta';
-    } else {
-      deltaEl.textContent = '比對照期間' + (delta > 0 ? '多賺 ' : '少賺 ') + fmt(Math.abs(delta));
-      deltaEl.className = 'stats-delta ' + (delta > 0 ? 'pos' : 'neg');
-    }
-
-    document.getElementById('platformDistLabel').textContent = formatRangeLabel(statsGranularity, curRange) + ' 各平台佔比';
-    renderPlatformDist(days, curRange);
+    document.getElementById('platformDistLabel').textContent = formatRangeLabel(statsGranularity, range) + ' 各平台佔比';
+    renderPlatformDist(days, range);
   }
 
   document.querySelectorAll('.seg-btn').forEach(function (btn) {
@@ -922,47 +945,76 @@
       document.querySelectorAll('.seg-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       statsGranularity = btn.getAttribute('data-gran');
-      statsCmpRefDate = defaultCmpRefDate(statsGranularity);
+      statsRefDate = new Date(); // 換粒度時回到「本期」
       renderStats();
     });
   });
-  document.getElementById('statsCmpPrevBtn').addEventListener('click', function () {
-    if (statsGranularity === 'week') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth(), statsCmpRefDate.getDate() - 7);
-    else if (statsGranularity === 'month') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth() - 1, 1);
-    else statsCmpRefDate = new Date(statsCmpRefDate.getFullYear() - 1, 0, 1);
+  document.getElementById('statsPrevBtn').addEventListener('click', function () {
+    if (statsGranularity === 'day') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth(), statsRefDate.getDate() - 1);
+    else if (statsGranularity === 'week') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth(), statsRefDate.getDate() - 7);
+    else if (statsGranularity === 'month') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth() - 1, 1);
+    else statsRefDate = new Date(statsRefDate.getFullYear() - 1, 0, 1);
     renderStats();
   });
-  document.getElementById('statsCmpNextBtn').addEventListener('click', function () {
-    if (isCmpAtLatestPeriod()) return;
-    if (statsGranularity === 'week') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth(), statsCmpRefDate.getDate() + 7);
-    else if (statsGranularity === 'month') statsCmpRefDate = new Date(statsCmpRefDate.getFullYear(), statsCmpRefDate.getMonth() + 1, 1);
-    else statsCmpRefDate = new Date(statsCmpRefDate.getFullYear() + 1, 0, 1);
+  document.getElementById('statsNextBtn').addEventListener('click', function () {
+    if (isAtLatestPeriod()) return;
+    if (statsGranularity === 'day') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth(), statsRefDate.getDate() + 1);
+    else if (statsGranularity === 'week') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth(), statsRefDate.getDate() + 7);
+    else if (statsGranularity === 'month') statsRefDate = new Date(statsRefDate.getFullYear(), statsRefDate.getMonth() + 1, 1);
+    else statsRefDate = new Date(statsRefDate.getFullYear() + 1, 0, 1);
     renderStats();
   });
-  var statsCmpJumpDate = document.getElementById('statsCmpJumpDate');
-  statsCmpJumpDate.max = todayKey();
-  statsCmpJumpDate.addEventListener('change', function () {
+  var statsJumpDate = document.getElementById('statsJumpDate');
+  statsJumpDate.max = todayKey();
+  statsJumpDate.addEventListener('change', function () {
     var v = this.value;
     if (!v) return;
     var parts = v.split('-');
-    // 不管目前是週/月/年哪個粒度,選到的這個日期落在哪個週期,就跳去那個週期
-    statsCmpRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    // 不管目前是天/週/月/年哪個粒度,選到的這個日期落在哪個週期,就跳去那個週期
+    statsRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     renderStats();
   });
 
-  // ---- 568 對帳(逐日累加,不配對) ----
-  var RECON_KEY = 'taxiLedgerBankDeposits568';
+  // ---- 對帳(逐日累加,不配對;568/Uber/Bolt/yoxi/直客都可以選) ----
+  var RECON_PLATFORMS = ['568', 'uber', 'bolt', 'yoxi', 'direct'];
+  var RECON_KEY = 'taxiLedgerBankDeposits';
+  var RECON_KEY_LEGACY_568 = 'taxiLedgerBankDeposits568'; // 舊版只有568時的key,讀一次做遷移用
   var editingDepositId = null;
+  var selectedReconPlatform = '568';
+
+  function reconPlatformLabel(platform) {
+    if (platform === '568') return '568';
+    return loadLabels()[platform] || platform;
+  }
 
   function loadDeposits() {
     try {
       var raw = localStorage.getItem(RECON_KEY);
-      return raw ? JSON.parse(raw) : [];
+      if (raw) return JSON.parse(raw);
+      var legacyRaw = localStorage.getItem(RECON_KEY_LEGACY_568);
+      if (legacyRaw) {
+        var legacy = JSON.parse(legacyRaw).map(function (d) { return { id: d.id, amount: d.amount, date: d.date, platform: '568' }; });
+        localStorage.setItem(RECON_KEY, JSON.stringify(legacy));
+        return legacy;
+      }
+      return [];
     } catch (e) { return []; }
   }
 
   function saveDepositsList(arr) {
     localStorage.setItem(RECON_KEY, JSON.stringify(arr));
+  }
+
+  function populateReconPlatformSelect() {
+    var sel = document.getElementById('reconPlatformSelect');
+    sel.innerHTML = '';
+    RECON_PLATFORMS.forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = reconPlatformLabel(p);
+      sel.appendChild(opt);
+    });
+    sel.value = selectedReconPlatform;
   }
 
   function resetReconForm() {
@@ -983,6 +1035,12 @@
     document.getElementById('reconDeleteBtn').style.display = 'block';
   }
 
+  document.getElementById('reconPlatformSelect').addEventListener('change', function () {
+    selectedReconPlatform = this.value;
+    resetReconForm();
+    renderRecon();
+  });
+
   document.getElementById('reconSaveBtn').addEventListener('click', function () {
     var amount = parseFloat(document.getElementById('reconAmount').value);
     var date = document.getElementById('reconDate').value;
@@ -990,10 +1048,10 @@
     var deposits = loadDeposits();
     if (editingDepositId) {
       deposits = deposits.map(function (d) {
-        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date } : d;
+        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform } : d;
       });
     } else {
-      deposits.push({ id: 'd' + Date.now(), amount: amount, date: date });
+      deposits.push({ id: 'd' + Date.now(), amount: amount, date: date, platform: selectedReconPlatform });
     }
     saveDepositsList(deposits);
     resetReconForm();
@@ -1009,19 +1067,24 @@
     renderRecon();
   });
 
-  function build568Estimates() {
+  function buildEstimatesForPlatform(platform) {
     var days = loadDays();
     var map = {};
     days.forEach(function (d) {
-      var c = d.cash568 || 0, o = d.online568 || 0;
-      if (c !== 0 || o !== 0) map[d.date] = calcNetOnline568(c, o);
+      if (platform === '568') {
+        var c = d.cash568 || 0, o = d.online568 || 0;
+        if (c !== 0 || o !== 0) map[d.date] = calcNetOnline568(c, o);
+      } else {
+        var v = d[platform] || 0;
+        if (v !== 0) map[d.date] = v;
+      }
     });
     return map;
   }
 
-  function buildReconRows() {
-    var estMap = build568Estimates();
-    var deposits = loadDeposits();
+  function buildReconRows(platform) {
+    var estMap = buildEstimatesForPlatform(platform);
+    var deposits = loadDeposits().filter(function (d) { return d.platform === platform; });
     var actualMap = {};
     deposits.forEach(function (dep) { actualMap[dep.date] = (actualMap[dep.date] || 0) + (dep.amount || 0); });
     var allDates = {};
@@ -1038,7 +1101,8 @@
   }
 
   function renderDepositList() {
-    var deposits = loadDeposits().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var deposits = loadDeposits().filter(function (d) { return d.platform === selectedReconPlatform; })
+      .sort(function (a, b) { return b.date.localeCompare(a.date); });
     var container = document.getElementById('reconDepositList');
     container.innerHTML = '';
     if (!deposits.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
@@ -1058,7 +1122,7 @@
     var container = document.getElementById('reconAccordion');
     container.innerHTML = '';
     if (!rows.length) {
-      container.innerHTML = '<p class="empty">還沒有資料——填「今日輸入」的 568 欄位或記一筆銀行入帳就會出現</p>';
+      container.innerHTML = '<p class="empty">還沒有資料——填「今日輸入」對應欄位或記一筆銀行入帳就會出現</p>';
       return;
     }
 
@@ -1092,12 +1156,12 @@
       if (mi === monthOrder.length - 1) monthDetails.open = true;
 
       var monthSummary = document.createElement('summary');
-      monthSummary.innerHTML = '<span>' + monthLabel + '</span><span class="chev">▾</span>';
+      monthSummary.innerHTML = '<span>' + monthLabel + '</span><span class="chev-badge">▾</span>';
       monthDetails.appendChild(monthSummary);
 
       var monthStats = document.createElement('div');
       monthStats.className = 'recon-mini-stats';
-      monthStats.innerHTML = '<span>應收 <b>' + fmt(m.estSum) + '</b></span><span>實收 <b>' + fmt(m.actSum) + '</b></span><span>未收 <b>' + fmt(m.cumulativeEnd) + '</b></span>';
+      monthStats.innerHTML = '<span>預估入帳 <b>' + fmt(m.estSum) + '</b></span><span>實際入帳 <b>' + fmt(m.actSum) + '</b></span><span>尚未入帳 <b>' + fmt(m.cumulativeEnd) + '</b></span>';
       monthDetails.appendChild(monthStats);
 
       for (var wi = m.weekOrder.length - 1; wi >= 0; wi--) {
@@ -1108,16 +1172,20 @@
         if (mi === monthOrder.length - 1 && wi === m.weekOrder.length - 1) weekDetails.open = true;
 
         var weekSummary = document.createElement('summary');
-        weekSummary.innerHTML = '<span>' + formatMD(w.start) + '～' + formatMD(w.end) + '</span><span class="chev">▾</span>';
+        weekSummary.innerHTML = '<span>' + formatMD(w.start) + '～' + formatMD(w.end) + '</span><span class="chev-badge">▾</span>';
         weekDetails.appendChild(weekSummary);
 
         var weekStats = document.createElement('div');
         weekStats.className = 'recon-mini-stats';
-        weekStats.innerHTML = '<span>應收 <b>' + fmt(w.estSum) + '</b></span><span>實收 <b>' + fmt(w.actSum) + '</b></span>';
+        weekStats.innerHTML = '<span>預估入帳 <b>' + fmt(w.estSum) + '</b></span><span>實際入帳 <b>' + fmt(w.actSum) + '</b></span>';
         weekDetails.appendChild(weekStats);
 
         var dayList = document.createElement('div');
         dayList.className = 'recon-day-list';
+        var headRow = document.createElement('div');
+        headRow.className = 'recon-head-row';
+        headRow.innerHTML = '<span>日期</span><span>預估入帳</span><span>實際入帳</span><span>尚未入帳</span>';
+        dayList.appendChild(headRow);
         w.days.forEach(function (row) {
           var d = new Date(row.date + 'T00:00:00');
           var wd = weekdayNames[d.getDay()];
@@ -1125,8 +1193,8 @@
           el.className = 'recon-day-row';
           el.innerHTML =
             '<span class="recon-day-date tnum">' + formatMD(d) + ' ' + wd + '</span>' +
-            '<span class="recon-day-col tnum">應收 ' + fmt(row.est) + '</span>' +
-            '<span class="recon-day-col tnum">入帳 ' + (row.act ? fmt(row.act) : '—') + '</span>' +
+            '<span class="recon-day-col tnum">' + fmt(row.est) + '</span>' +
+            '<span class="recon-day-col tnum">' + (row.act ? fmt(row.act) : '—') + '</span>' +
             '<span class="recon-day-col strong tnum">' + fmt(row.cumulative) + '</span>';
           dayList.appendChild(el);
         });
@@ -1139,7 +1207,10 @@
   }
 
   function renderRecon() {
-    var rows = buildReconRows();
+    populateReconPlatformSelect();
+    document.getElementById('reconIntro').textContent =
+      reconPlatformLabel(selectedReconPlatform) + ' 逐日累加,不配對——預估入帳金額自動從「今日輸入」帶入,只需要記銀行實際入帳。';
+    var rows = buildReconRows(selectedReconPlatform);
     var outstanding = rows.length ? rows[rows.length - 1].cumulative : 0;
     var el = document.getElementById('reconOutstanding');
     el.textContent = fmt(outstanding);
@@ -1183,10 +1254,12 @@
           data[STORAGE_KEY].forEach(function (d) { byDate[d.date] = d; importedDays++; });
           saveDays(Object.keys(byDate).map(function (k) { return byDate[k]; }));
         }
-        if (Array.isArray(data[RECON_KEY])) {
+        var importedDeposits = Array.isArray(data[RECON_KEY]) ? data[RECON_KEY]
+          : (Array.isArray(data[RECON_KEY_LEGACY_568]) ? data[RECON_KEY_LEGACY_568].map(function (d) { return { id: d.id, amount: d.amount, date: d.date, platform: '568' }; }) : null);
+        if (importedDeposits) {
           var byId = {};
           loadDeposits().forEach(function (d) { byId[d.id] = d; });
-          data[RECON_KEY].forEach(function (d) { byId[d.id] = d; });
+          importedDeposits.forEach(function (d) { byId[d.id] = d; });
           saveDepositsList(Object.keys(byId).map(function (k) { return byId[k]; }));
         }
         if (data[LABELS_KEY]) { saveLabels(data[LABELS_KEY]); }
@@ -1204,6 +1277,7 @@
 
   applyLabels();
   loadDateIntoForm(todayKey());
+  document.getElementById('saveBtn').style.display = 'block';
 
   if ('serviceWorker' in navigator) {
     var swHadControllerAtLoad = !!navigator.serviceWorker.controller;
