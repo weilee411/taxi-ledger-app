@@ -1503,8 +1503,8 @@
       .filter(function (t) { return t.fromAccountId === account.id; })
       .reduce(function (s, t) { return s + (t.amount || 0); }, 0);
     if (account.type === 'credit') {
-      // 信用帳戶:餘額代表「目前欠多少」,消費/轉出會增加負債,轉入(還款/繳款)會減少負債
-      return (account.initialBalance || 0) + spent + transferOut - transferIn;
+      // 信用帳戶:餘額代表「目前欠多少」,消費/轉出會增加負債,轉入(還款/繳款)跟記在信用帳戶上的收入(退款/回饋)都會減少負債
+      return (account.initialBalance || 0) + spent + transferOut - transferIn - earned;
     }
     return (account.initialBalance || 0) + deposited + earned - spent + transferIn - transferOut;
   }
