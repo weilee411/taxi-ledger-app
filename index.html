@@ -118,6 +118,9 @@
   .btn.ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); font-weight: 600; font-size: 15px; padding: 10px; }
   .btn.small { padding: 8px 12px; font-size: 14px; width: auto; }
   .btn.saved { background: var(--income); }
+  .dayoff-row { margin-bottom: 14px; }
+  .dayoff-btn { width: auto; }
+  .dayoff-btn.active { background: var(--pending); color: var(--accent-ink); border-color: var(--pending); }
   .fab-save-round { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 15; width: 52px; height: 52px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); font-size: 22px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); transition: background-color .15s ease; }
   .fab-save-round.saved { background: var(--income); }
 
@@ -145,6 +148,8 @@
   .cal-cell.has-record::after { content: ''; position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
   .cal-cell.today { border: 1.5px solid var(--accent); font-weight: 700; }
   .cal-cell.selected { background: var(--accent); color: var(--accent-ink); }
+  .cal-cell.day-off { background: rgba(169,122,38,.22); }
+  .cal-cell.selected.day-off { background: var(--accent); }
   .cal-cell.selected.has-record::after { background: var(--accent-ink); }
   .cal-legend { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-muted); margin-top: 10px; }
   .cal-legend .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: inline-block; }
@@ -268,6 +273,10 @@
       <button class="btn small ghost" id="backToToday">回到今天</button>
     </div>
 
+    <div class="dayoff-row">
+      <button type="button" class="btn small ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
+    </div>
+
     <div class="stats">
       <div class="stat"><div class="k" id="todayStatLabel">今日總收入</div><div class="v tnum" id="todayTotal">$0</div></div>
       <div class="stat"><div class="k" id="todayEstimatedLabel">今日預估收入</div><div class="v tnum" id="todayEstimated">$0</div></div>
@@ -312,6 +321,7 @@
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend"><span class="dot"></span> 有紀錄的日期 · 點格子跳去那天編輯</div>
+      <div class="cal-legend"><span class="dot" style="background:var(--pending);"></span> 休假日</div>
       <h2 style="margin-top:18px;">最近 7 天</h2>
       <div id="recentList"></div>
     </div>
@@ -838,7 +848,23 @@
   }
 
   var editingDate = todayKey();
+  var editingDayOff = false;
   var savedFeedbackActive = false;
+
+  function updateDayOffButtonState() {
+    var btn = document.getElementById('dayOffToggle');
+    btn.textContent = editingDayOff ? '☀️ 取消休假標記' : '🏖 標記為休假日';
+    btn.classList.toggle('active', editingDayOff);
+  }
+
+  document.getElementById('dayOffToggle').addEventListener('click', function () {
+    editingDayOff = !editingDayOff;
+    updateDayOffButtonState();
+    var entry = persistCurrentEntry();
+    showSavedFeedback(entry.savedAt);
+    if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
+    renderCalendar();
+  });
   var calViewDate = new Date();
   calViewDate.setDate(1);
 
@@ -867,11 +893,13 @@
     });
     document.getElementById('startTime').value = entry ? (entry.startTime || '') : '';
     document.getElementById('endTime').value = entry ? (entry.endTime || '') : '';
+    editingDayOff = entry ? !!entry.dayOff : false;
     editingDate = date;
     updateEditBanner();
     updateDeleteBtn();
     updateLiveCalc();
     updatePunchButtonState();
+    updateDayOffButtonState();
     renderCalendar();
   }
 
@@ -894,7 +922,11 @@
     var days = loadDays();
     document.getElementById('dayCount').textContent = days.length;
     var recordSet = {};
-    days.forEach(function (d) { recordSet[d.date] = true; });
+    var dayOffSet = {};
+    days.forEach(function (d) {
+      recordSet[d.date] = true;
+      if (d.dayOff) dayOffSet[d.date] = true;
+    });
 
     var startWeekday = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -920,6 +952,7 @@
       if (dateStr === todayStr) cls += ' today';
       if (dateStr === editingDate) cls += ' selected';
       if (recordSet[dateStr]) cls += ' has-record';
+      if (dayOffSet[dateStr]) cls += ' day-off';
       cell.className = cls;
       cell.textContent = day;
       cell.setAttribute('data-date', dateStr);
@@ -1036,6 +1069,7 @@
     ids.forEach(function (id) { entry[id] = num(id); });
     entry.startTime = document.getElementById('startTime').value;
     entry.endTime = document.getElementById('endTime').value;
+    entry.dayOff = editingDayOff;
     var days = loadDays().filter(function (d) { return d.date !== entry.date; });
     days.push(entry);
     saveDays(days);
