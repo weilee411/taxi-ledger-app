@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>記帳本 · 營業收入</title>
+<title>記帳本 · 收入支出</title>
 <meta name="description" content="每天輸入 568 現金/線上支付跟其他平台收入,自動算好對帳金額,資料存在這支裝置上。">
 <meta name="theme-color" content="#2B6A78">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -154,6 +154,8 @@
   .cal-legend { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-muted); margin-top: 10px; }
   .cal-legend .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: inline-block; }
 
+  .hero-row { display: flex; gap: 8px; }
+
   .recent-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px; border-bottom: 1px solid var(--border); cursor: pointer; }
   .recent-item:last-child { border-bottom: none; }
   .recent-item.today-row .recent-date { color: var(--accent); }
@@ -175,7 +177,7 @@
   .stats-delta.neg { color: var(--expense); }
 
   .yoy-nav { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
-  .cal-nav.small { width: 20px; height: 20px; overflow: visible; font-size: 44px; line-height: 1; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .cal-nav.small { width: 44px; height: 44px; overflow: visible; font-size: 24px; line-height: 1; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); border-radius: 10px; }
 
   .dist-row { margin-bottom: 10px; }
   .dist-row:last-child { margin-bottom: 0; }
@@ -207,7 +209,7 @@
   <div class="topbar">
     <div>
       <h1>記帳本</h1>
-      <p class="sub">營業收入 · 資料只存在這支裝置</p>
+      <p class="sub">收入支出 · 資料只存在這支裝置</p>
     </div>
     <button type="button" class="gearbtn" id="settingsBtn" aria-label="設定平台名稱">⚙</button>
   </div>
@@ -290,9 +292,15 @@
       <div class="subrow"><span class="lab" id="label-cut-cash568">568 現金 15%</span><span class="amt tnum" id="cut568Cash">-$0</span></div>
       <div class="subrow"><span class="lab" id="label-cut-online568">568 綁定 15%</span><span class="amt tnum" id="cut568Online">-$0</span></div>
       <div class="subrow"><span class="lab">15% 合計</span><span class="amt tnum" id="cut568Total">-$0</span></div>
-      <div class="hero">
-        <div class="k">預估銀行應入帳</div>
-        <div class="v tnum" id="netOnline568">$0</div>
+      <div class="hero-row">
+        <div class="hero" style="flex:1;">
+          <div class="k">568 總入帳</div>
+          <div class="v tnum" id="total568">$0</div>
+        </div>
+        <div class="hero" style="flex:1;">
+          <div class="k">預估銀行入帳</div>
+          <div class="v tnum" id="netOnline568">$0</div>
+        </div>
       </div>
     </div>
 
@@ -322,8 +330,22 @@
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend"><span class="dot"></span> 有紀錄的日期 · 點格子跳去那天編輯</div>
       <div class="cal-legend"><span class="dot" style="background:var(--pending);"></span> 休假日</div>
+      <div class="daydetail-block">
+        <h2 id="dayDetailTitle">今天的收支</h2>
+        <div class="seg-group" id="dayDetailTabGroup">
+          <button type="button" class="seg-btn active" data-subtab="income">收入</button>
+          <button type="button" class="seg-btn" data-subtab="expense">支出</button>
+        </div>
+        <div id="dayDetailIncome"></div>
+        <div id="dayDetailExpense" style="display:none"></div>
+      </div>
       <h2 style="margin-top:18px;">最近 7 天</h2>
+      <div class="seg-group" id="recentTabGroup">
+        <button type="button" class="seg-btn active" data-subtab="income">收入</button>
+        <button type="button" class="seg-btn" data-subtab="expense">支出</button>
+      </div>
       <div id="recentList"></div>
+      <div id="recentExpenseList" style="display:none"></div>
     </div>
 
     <div style="height:64px;"></div>
@@ -480,10 +502,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2>支出紀錄</h2>
-      <div id="expenseList"><p class="empty">還沒有記錄</p></div>
-    </div>
   </div>
 
   <div id="tab-incomes" style="display:none">
@@ -502,12 +520,12 @@
 
     <div class="card">
       <h2>收入紀錄</h2>
-      <p class="settings-hint">這裡是逐筆的其他收入紀錄(例如個案請款、借款、歷史資料),跟「營業收入」分頁的568/Uber每日計算機是分開的兩件事,不會互相影響。</p>
+      <p class="settings-hint">這裡是逐筆的其他收入紀錄(例如個案請款、借款、歷史資料),跟「收入支出」分頁的568/Uber每日計算機是分開的兩件事,不會互相影響。</p>
       <div id="incomeList"><p class="empty">還沒有記錄</p></div>
     </div>
   </div>
 
-  <p class="foot">記帳本 v3 · 營業收入 / 統計 / 對帳 / 帳戶 / 支出<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
+  <p class="foot">記帳本 v3 · 收入支出 / 統計 / 對帳 / 帳戶<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
 
   <div class="quick-add-popup" id="quickAddPopup" style="display:none">
     <button type="button" id="quickAddIncomeBtn">💰 加一筆收入</button>
@@ -515,7 +533,7 @@
   </div>
 
   <div class="tabbar" id="tabbar">
-    <button type="button" class="tab-btn active" data-tab="today">營業收入</button>
+    <button type="button" class="tab-btn active" data-tab="today">收入支出</button>
     <button type="button" class="tab-btn" data-tab="stats">統計</button>
     <button type="button" class="tab-btn-center" id="quickAddBtn" aria-label="快速新增">+</button>
     <button type="button" class="tab-btn" data-tab="recon">對帳</button>
@@ -715,6 +733,7 @@
 
   function updateLiveCalc() {
     var cash = num('cash568'), online = num('online568');
+    document.getElementById('total568').textContent = fmt(cash + online);
     var net = calcNetOnline568(cash, online);
     var el = document.getElementById('netOnline568');
     el.textContent = fmt(net);
@@ -900,6 +919,9 @@
     updateLiveCalc();
     updatePunchButtonState();
     updateDayOffButtonState();
+    updateDayDetailTitle();
+    renderDayDetailIncome();
+    renderDayDetailExpense();
     renderCalendar();
   }
 
@@ -960,6 +982,10 @@
     }
 
     renderRecentList();
+    renderRecentExpenseList();
+    updateDayDetailTitle();
+    renderDayDetailIncome();
+    renderDayDetailExpense();
   }
 
   function renderRecentList() {
@@ -997,6 +1023,68 @@
     loadDateIntoForm(row.getAttribute('data-date'));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  function renderRecentExpenseList() {
+    var earliest = new Date();
+    earliest.setHours(0, 0, 0, 0);
+    earliest.setDate(earliest.getDate() - 6);
+    var earliestDate = formatDateStr(earliest);
+    var latestDate = todayKey();
+    var expenses = loadExpenses().filter(function (e) {
+      return e.date >= earliestDate && e.date <= latestDate;
+    }).sort(compareExpenseDesc);
+    renderExpenseRows(document.getElementById('recentExpenseList'), expenses);
+  }
+
+  function updateDayDetailTitle() {
+    document.getElementById('dayDetailTitle').textContent = editingDate === todayKey()
+      ? '今天的收支'
+      : formatDateLabel(editingDate) + ' 的收支';
+  }
+
+  function renderDayDetailIncome() {
+    var container = document.getElementById('dayDetailIncome');
+    var entry = loadDays().find(function (d) { return d.date === editingDate; });
+    container.innerHTML = '';
+    if (!entry) {
+      container.innerHTML = '<p class="empty">這天還沒有輸入收入</p>';
+      return;
+    }
+    var labels = loadLabels();
+    ids.forEach(function (id) {
+      var row = document.createElement('div');
+      row.className = 'recent-item';
+      row.innerHTML = '<span class="recent-date">' + labels[id] + '</span><span class="recent-amt tnum">' + fmt(entry[id] || 0) + '</span>';
+      container.appendChild(row);
+    });
+    var cash = entry.cash568 || 0;
+    var online = entry.online568 || 0;
+    var estimated = cash + calcNetOnline568(cash, online) + (entry.uber || 0) + (entry.bolt || 0) + (entry.yoxi || 0) + (entry.direct || 0) + (entry.other || 0);
+    var totalRow = document.createElement('div');
+    totalRow.className = 'recent-item';
+    totalRow.innerHTML = '<span class="recent-date"><strong>預估收入總額</strong></span><span class="recent-amt tnum">' + fmt(estimated) + '</span>';
+    container.appendChild(totalRow);
+  }
+
+  function renderDayDetailExpense() {
+    var expenses = loadExpenses().filter(function (e) { return e.date === editingDate; }).sort(compareExpenseDesc);
+    renderExpenseRows(document.getElementById('dayDetailExpense'), expenses);
+  }
+
+  function bindSubtabGroup(groupId, incomeId, expenseId) {
+    document.getElementById(groupId).addEventListener('click', function (e) {
+      var btn = e.target.closest('.seg-btn');
+      if (!btn) return;
+      document.querySelectorAll('#' + groupId + ' .seg-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var showExpense = btn.getAttribute('data-subtab') === 'expense';
+      document.getElementById(incomeId).style.display = showExpense ? 'none' : 'block';
+      document.getElementById(expenseId).style.display = showExpense ? 'block' : 'none';
+    });
+  }
+
+  bindSubtabGroup('recentTabGroup', 'recentList', 'recentExpenseList');
+  bindSubtabGroup('dayDetailTabGroup', 'dayDetailIncome', 'dayDetailExpense');
 
   document.getElementById('calGrid').addEventListener('click', function (e) {
     var cell = e.target.closest('.cal-cell:not(.empty)');
@@ -1097,7 +1185,7 @@
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
-    if (tab === 'expenses') { resetExpenseForm(); renderExpenseList(); }
+    if (tab === 'expenses') { resetExpenseForm(); }
     if (tab === 'incomes') { resetIncomeForm(); renderIncomeList(); }
     window.scrollTo({ top: 0, behavior: 'instant' in window.scrollTo ? 'instant' : 'auto' });
   }
@@ -1220,9 +1308,9 @@
     renderPlatformDist(days, range);
   }
 
-  document.querySelectorAll('.seg-btn').forEach(function (btn) {
+  document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      document.querySelectorAll('.seg-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       statsGranularity = btn.getAttribute('data-gran');
       statsRefDate = new Date(); // 換粒度時回到「本期」
@@ -1820,14 +1908,14 @@
     var expenses = loadExpenses();
     if (editingExpenseId) {
       expenses = expenses.map(function (e) {
-        return e.id === editingExpenseId ? { id: e.id, date: date, name: name, amount: amount, category: category, accountId: accountId } : e;
+        return e.id === editingExpenseId ? { id: e.id, date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: e.createdAt || new Date().toISOString() } : e;
       });
     } else {
-      expenses.push({ id: uniqueId('e'), date: date, name: name, amount: amount, category: category, accountId: accountId });
+      expenses.push({ id: uniqueId('e'), date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: new Date().toISOString() });
     }
     saveExpensesList(expenses);
     resetExpenseForm();
-    renderExpenseList();
+    renderCalendar();
   });
 
   document.getElementById('expenseDeleteBtn').addEventListener('click', function () {
@@ -1836,26 +1924,36 @@
     var expenses = loadExpenses().filter(function (e) { return e.id !== editingExpenseId; });
     saveExpensesList(expenses);
     resetExpenseForm();
-    renderExpenseList();
+    renderCalendar();
   });
 
-  function renderExpenseList() {
+  function formatTimeLabel(iso) {
+    var d = new Date(iso);
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function compareExpenseDesc(a, b) {
+    if (a.date !== b.date) return b.date.localeCompare(a.date);
+    return (b.createdAt || '').localeCompare(a.createdAt || '');
+  }
+
+  function renderExpenseRows(container, expenses) {
     var labels = loadCategoryLabels();
     var accounts = loadAccounts();
     var accountName = {};
     accounts.forEach(function (a) { accountName[a.id] = a.name; });
-    var expenses = loadExpenses().slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
-    var container = document.getElementById('expenseList');
     container.innerHTML = '';
-    if (!expenses.length) { container.innerHTML = '<p class="empty">還沒有記錄</p>'; return; }
+    if (!expenses.length) { container.innerHTML = '<p class="empty">還沒有支出紀錄</p>'; return; }
     expenses.forEach(function (exp) {
       var sub = (labels[exp.category] || exp.category) + (exp.accountId && accountName[exp.accountId] ? ' · ' + accountName[exp.accountId] : '');
+      var timeLabel = exp.createdAt ? (' ' + formatTimeLabel(exp.createdAt)) : '';
       var row = document.createElement('div');
       row.className = 'recent-item';
       row.innerHTML =
-        '<span class="recent-date tnum">' + formatDateLabel(exp.date) + ' ' + exp.name + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
+        '<span class="recent-date tnum">' + formatDateLabel(exp.date) + timeLabel + ' ' + exp.name + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
         '<span class="recent-amt tnum">' + fmt(exp.amount) + '</span>';
       row.addEventListener('click', function () {
+        switchTab('expenses');
         loadExpenseIntoForm(exp);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
