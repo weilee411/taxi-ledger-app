@@ -62,6 +62,10 @@
   .account-name { font-size: 15px; font-weight: 700; }
   .account-type-badge { font-size: 12px; color: var(--ink-muted); font-weight: 600; margin-left: 6px; }
   .account-balance { font-size: 15px; font-weight: 700; }
+  .account-group-header { font-size: 13px; font-weight: 700; color: var(--ink-muted); padding: 10px 4px 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .account-reorder { display: flex; flex-direction: column; gap: 2px; margin-right: 8px; }
+  .account-move-btn { width: 24px; height: 24px; border: none; background: var(--surface-alt); border-radius: 6px; color: var(--ink-muted); font-size: 11px; cursor: pointer; padding: 0; line-height: 24px; }
+  .account-name-wrap { flex: 1; min-width: 0; }
   .detail-overlay { position: fixed; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 100%; max-width: 480px; background: var(--bg); z-index: 30; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .detail-overlay-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(16px, env(safe-area-inset-top)) 16px 10px; position: sticky; top: 0; background: var(--bg); z-index: 1; }
   .detail-overlay-header span { font-size: 17px; font-weight: 700; flex: 1; text-align: center; }
@@ -1435,10 +1439,10 @@
     var deposits = loadDeposits();
     if (editingDepositId) {
       deposits = deposits.map(function (d) {
-        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform, accountId: accountId } : d;
+        return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform, accountId: accountId, createdAt: d.createdAt || new Date().toISOString() } : d;
       });
     } else {
-      deposits.push({ id: uniqueId('d'), amount: amount, date: date, platform: selectedReconPlatform, accountId: accountId });
+      deposits.push({ id: uniqueId('d'), amount: amount, date: date, platform: selectedReconPlatform, accountId: accountId, createdAt: new Date().toISOString() });
     }
     saveDepositsList(deposits);
     resetReconForm();
@@ -1609,7 +1613,7 @@
   // ---- 帳戶(現金/信用,精簡版——貸款/帳單週期/連動主帳戶留到之後) ----
   var ACCOUNTS_KEY = 'taxiLedgerAccounts';
   var editingAccountId = null;
-  var ACCOUNT_TYPE_LABEL = { cash: '現金', credit: '信用' };
+  var ACCOUNT_TYPE_LABEL = { cash: '現金', credit: '信用卡' };
 
   function loadAccounts() {
     try {
@@ -1730,18 +1734,35 @@
     if (!accounts.length) {
       container.innerHTML = '<p class="empty">還沒有帳戶,新增第一個吧</p>';
     } else {
-      accounts.forEach(function (acc) {
-        var balance = computeAccountBalance(acc);
-        var currency = acc.currency || 'TWD';
-        var row = document.createElement('div');
-        row.className = 'account-row' + (acc.archived ? ' archived' : '');
-        row.innerHTML =
-          '<span><span class="account-name">' + acc.name + '</span><span class="account-type-badge">' + ACCOUNT_TYPE_LABEL[acc.type] + (currency !== 'TWD' ? '·' + currency : '') + (acc.archived ? '·已封存' : '') + '</span></span>' +
-          '<span class="account-balance tnum">' + (currency !== 'TWD' ? currency + ' ' : '') + fmt(balance) + '</span>';
-        row.addEventListener('click', function () {
-          showAccountDetail(acc.id);
+      ['cash', 'credit'].forEach(function (type) {
+        var group = accounts.filter(function (a) { return a.type === type; });
+        if (!group.length) return;
+        var header = document.createElement('div');
+        header.className = 'account-group-header';
+        header.textContent = ACCOUNT_TYPE_LABEL[type];
+        container.appendChild(header);
+        group.forEach(function (acc, idxInGroup) {
+          var balance = computeAccountBalance(acc);
+          var displayBalance = (acc.type === 'credit') ? -balance : balance;
+          var currency = acc.currency || 'TWD';
+          var row = document.createElement('div');
+          row.className = 'account-row' + (acc.archived ? ' archived' : '');
+          row.innerHTML =
+            '<span class="account-reorder">' +
+              '<button type="button" class="account-move-btn" data-dir="up" data-id="' + acc.id + '"' + (idxInGroup === 0 ? ' style="visibility:hidden;"' : '') + '>▲</button>' +
+              '<button type="button" class="account-move-btn" data-dir="down" data-id="' + acc.id + '"' + (idxInGroup === group.length - 1 ? ' style="visibility:hidden;"' : '') + '>▼</button>' +
+            '</span>' +
+            '<span class="account-name-wrap"><span class="account-name">' + acc.name + '</span>' + (currency !== 'TWD' ? '<span class="account-type-badge">' + currency + '</span>' : '') + (acc.archived ? '<span class="account-type-badge">已封存</span>' : '') + '</span>' +
+            '<span class="account-balance tnum ' + (displayBalance < 0 ? 'neg' : 'pos') + '">' + (currency !== 'TWD' ? currency + ' ' : '') + fmt(displayBalance) + '</span>';
+          row.querySelectorAll('.account-move-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+              e.stopPropagation();
+              moveAccount(btn.getAttribute('data-id'), btn.getAttribute('data-dir'));
+            });
+          });
+          row.addEventListener('click', function () { showAccountDetail(acc.id); });
+          container.appendChild(row);
         });
-        container.appendChild(row);
       });
     }
     // 信用帳戶餘額代表「欠多少」,是負債不是資產,算總餘額(淨值)時要用減的,不能直接加;
@@ -1749,6 +1770,20 @@
     var total = accounts.filter(function (a) { return a.includeInTotal !== false && !a.archived && (a.currency || 'TWD') === 'TWD'; })
       .reduce(function (s, a) { var b = computeAccountBalance(a); return s + (a.type === 'credit' ? -b : b); }, 0);
     document.getElementById('accountsTotalBalance').textContent = fmt(total);
+  }
+
+  function moveAccount(id, dir) {
+    var accounts = loadAccounts();
+    var acc = accounts.find(function (a) { return a.id === id; });
+    if (!acc) return;
+    var sameTypeIndexes = accounts.map(function (a, i) { return a.type === acc.type ? i : -1; }).filter(function (i) { return i !== -1; });
+    var posInType = sameTypeIndexes.indexOf(accounts.indexOf(acc));
+    var swapWithPos = dir === 'up' ? posInType - 1 : posInType + 1;
+    if (swapWithPos < 0 || swapWithPos >= sameTypeIndexes.length) return;
+    var i1 = accounts.indexOf(acc), i2 = sameTypeIndexes[swapWithPos];
+    var tmp = accounts[i1]; accounts[i1] = accounts[i2]; accounts[i2] = tmp;
+    saveAccountsList(accounts);
+    renderAccounts();
   }
 
   // ---- 帳戶明細(點帳戶列跳全螢幕頁,合併顯示這個帳戶的支出/收入/轉帳) ----
@@ -1766,10 +1801,11 @@
     if (!acc) { document.getElementById('accountDetailOverlay').style.display = 'none'; return; }
     var currency = acc.currency || 'TWD';
     var balance = computeAccountBalance(acc);
+    var displayBalance = (acc.type === 'credit') ? -balance : balance;
     document.getElementById('accountDetailName').textContent = acc.name;
     var balEl = document.getElementById('accountDetailBalance');
-    balEl.textContent = (currency !== 'TWD' ? currency + ' ' : '') + fmt(balance);
-    balEl.className = 'v tnum ' + ((acc.type === 'credit' ? -balance : balance) < 0 ? 'neg' : 'pos');
+    balEl.textContent = (currency !== 'TWD' ? currency + ' ' : '') + fmt(displayBalance);
+    balEl.className = 'v tnum ' + (displayBalance < 0 ? 'neg' : 'pos');
 
     var expCatLabels = loadCategoryLabels();
     var incCatLabels = loadIncomeCategoryLabels();
@@ -1779,21 +1815,24 @@
     var items = [];
     loadExpenses().forEach(function (e) {
       if (e.accountId !== accountDetailId) return;
-      items.push({ date: e.date, type: 'expense', label: e.name, sub: expCatLabels[e.category] || e.category, amount: -e.amount, ref: e });
+      items.push({ date: e.date, createdAt: e.createdAt, type: 'expense', label: e.name, sub: expCatLabels[e.category] || e.category, amount: -e.amount, ref: e });
     });
     loadIncomes().forEach(function (i) {
       if (i.accountId !== accountDetailId) return;
-      items.push({ date: i.date, type: 'income', label: i.name, sub: incCatLabels[i.category] || i.category, amount: i.amount, ref: i });
+      items.push({ date: i.date, createdAt: i.createdAt, type: 'income', label: i.name, sub: incCatLabels[i.category] || i.category, amount: i.amount, ref: i });
     });
     loadTransfers().forEach(function (t) {
       if (t.fromAccountId === accountDetailId) {
-        items.push({ date: t.date, type: 'transfer', label: '轉出 → ' + (accountName[t.toAccountId] || '?'), sub: t.note || '', amount: -t.amount, ref: t });
+        items.push({ date: t.date, createdAt: t.createdAt, type: 'transfer', label: '轉出 → ' + (accountName[t.toAccountId] || '?'), sub: t.note || '', amount: -t.amount, ref: t });
       }
       if (t.toAccountId === accountDetailId) {
-        items.push({ date: t.date, type: 'transfer', label: '轉入 ← ' + (accountName[t.fromAccountId] || '?'), sub: t.note || '', amount: t.amount, ref: t });
+        items.push({ date: t.date, createdAt: t.createdAt, type: 'transfer', label: '轉入 ← ' + (accountName[t.fromAccountId] || '?'), sub: t.note || '', amount: t.amount, ref: t });
       }
     });
-    items.sort(function (a, b) { return b.date.localeCompare(a.date); });
+    items.sort(function (a, b) {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return (b.createdAt || '').localeCompare(a.createdAt || '');
+    });
 
     var container = document.getElementById('accountDetailList');
     container.innerHTML = '';
@@ -2025,10 +2064,10 @@
     var transfers = loadTransfers();
     if (editingTransferId) {
       transfers = transfers.map(function (t) {
-        return t.id === editingTransferId ? { id: t.id, date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note } : t;
+        return t.id === editingTransferId ? { id: t.id, date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, createdAt: t.createdAt || new Date().toISOString() } : t;
       });
     } else {
-      transfers.push({ id: uniqueId('t'), date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note });
+      transfers.push({ id: uniqueId('t'), date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, createdAt: new Date().toISOString() });
     }
     saveTransfersList(transfers);
     resetTransferForm();
@@ -2131,10 +2170,10 @@
     var incomes = loadIncomes();
     if (editingIncomeId) {
       incomes = incomes.map(function (i) {
-        return i.id === editingIncomeId ? { id: i.id, date: date, name: name, amount: amount, category: category, accountId: accountId } : i;
+        return i.id === editingIncomeId ? { id: i.id, date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: i.createdAt || new Date().toISOString() } : i;
       });
     } else {
-      incomes.push({ id: uniqueId('i'), date: date, name: name, amount: amount, category: category, accountId: accountId });
+      incomes.push({ id: uniqueId('i'), date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: new Date().toISOString() });
     }
     saveIncomesList(incomes);
     resetIncomeForm();
