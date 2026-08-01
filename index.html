@@ -202,6 +202,13 @@
   .tab-btn-center { flex-shrink: 0; width: 52px; height: 52px; margin: -28px 6px 0; border-radius: 50%; border: 4px solid var(--bg); background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), rgba(255,255,255,0) 46%), var(--accent); color: var(--accent-ink); font-size: 28px; font-weight: 700; line-height: 1; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.35), inset 0 1px 2px rgba(255,255,255,.5), inset 0 -3px 5px rgba(0,0,0,.2); }
   .quick-add-popup { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 21; display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
   .quick-add-popup button { white-space: nowrap; padding: 12px 22px; border-radius: 10px; border: none; background: var(--surface-alt); color: var(--ink); font-size: 15px; font-weight: 700; cursor: pointer; }
+  .addsheet-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; position:sticky; top:0; background:var(--surface); z-index:1; }
+  .addsheet-close, .addsheet-confirm { width:36px; height:36px; border-radius:50%; border:none; background:var(--surface-alt); color:var(--ink); font-size:16px; }
+  .tag-suggest-row { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px; }
+  .tag-suggest-row .chip { padding:4px 10px; border-radius:14px; background:var(--surface-alt); border:1px solid var(--border); font-size:13px; }
+  #addTagsChips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+  #addTagsChips .chip { padding:3px 8px; border-radius:12px; background:var(--pending); color:var(--accent-ink); font-size:12px; display:flex; align-items:center; gap:4px; }
+  #addTagsChips .chip .rm { cursor:pointer; }
 
   .foot { text-align:center; font-size: 12px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
 </style>
@@ -546,9 +553,43 @@
 
   <p class="foot">記帳本 v3 · 收入支出 / 統計 / 對帳 / 帳戶<br>加到主畫面後,資料保存在這支裝置的瀏覽器裡,不會上傳</p>
 
-  <div class="quick-add-popup" id="quickAddPopup" style="display:none">
-    <button type="button" id="quickAddIncomeBtn">💰 加一筆收入</button>
-    <button type="button" id="quickAddExpenseBtn">🧾 加一筆支出</button>
+  <div id="addSheet" style="display:none; position:fixed; inset:0; z-index:50; background:var(--surface); overflow-y:auto;">
+    <div class="addsheet-header">
+      <button type="button" class="addsheet-close" id="addSheetClose">✕</button>
+      <h2 id="addSheetTitle">新增記錄</h2>
+      <button type="button" class="addsheet-confirm" id="addSheetConfirm">✓</button>
+    </div>
+    <div style="padding:0 16px 24px;">
+      <div class="seg-group" id="addSheetTypeTabs">
+        <button type="button" class="seg-btn active" data-type="expense">支出</button>
+        <button type="button" class="seg-btn" data-type="income">收入</button>
+        <button type="button" class="seg-btn" data-type="transfer">轉帳</button>
+      </div>
+      <div id="addSheetMoneyFields" style="margin-top:14px;">
+        <div class="recon-field"><label>金額</label><input type="text" inputmode="decimal" id="addAmount" placeholder="0"></div>
+        <div class="recon-field"><label>名稱</label><input type="text" id="addName" maxlength="20"></div>
+        <div id="addTagSuggestions" class="tag-suggest-row"></div>
+        <div class="recon-field"><label>帳戶</label><select id="addAccountSelect"></select></div>
+        <div class="recon-field"><label>分類</label><select id="addCategorySelect"></select></div>
+        <div class="recon-field"><label>專案</label><select id="addProjectSelect"></select></div>
+        <div class="recon-field"><label>商家</label><input type="text" id="addMerchant"></div>
+        <div class="recon-field"><label>交易頻率</label><select id="addRecurrence"><option value="once">單次</option><option value="fixed">固定支出</option></select></div>
+        <div class="recon-field"><label>日期</label><input type="date" id="addDate"></div>
+        <div class="recon-field"><label>時間</label><input type="time" id="addTime"></div>
+        <div class="recon-field"><label>發票號碼</label><input type="text" id="addInvoice"></div>
+        <div class="recon-field"><label>隨機碼</label><input type="text" id="addRandomCode"></div>
+        <div class="recon-field"><label>標籤</label><div id="addTagsChips"></div><input type="text" id="addTagInput" placeholder="輸入後按 Enter 新增標籤"></div>
+        <div class="recon-field"><label>備註</label><textarea id="addNote" rows="3"></textarea></div>
+      </div>
+      <div id="addSheetTransferFields" style="display:none; margin-top:14px;">
+        <div class="recon-field"><label>金額</label><input type="text" inputmode="decimal" id="addTransferAmount" placeholder="0"></div>
+        <div class="recon-field"><label>轉出帳戶</label><select id="addTransferFrom"></select></div>
+        <div class="recon-field"><label>轉入帳戶</label><select id="addTransferTo"></select></div>
+        <div class="recon-field"><label>日期</label><input type="date" id="addTransferDate"></div>
+        <div class="recon-field"><label>備註</label><textarea id="addTransferNote" rows="3"></textarea></div>
+      </div>
+      <button type="button" class="btn ghost small" id="addSheetDeleteBtn" style="display:none;">刪除這筆</button>
+    </div>
   </div>
 
   <div class="tabbar" id="tabbar">
@@ -1212,24 +1253,9 @@
     btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
   });
 
-  // ---- 底部中間「+」快速新增(收入/支出二選一) ----
-  var quickAddPopup = document.getElementById('quickAddPopup');
-  document.getElementById('quickAddBtn').addEventListener('click', function (e) {
-    e.stopPropagation();
-    quickAddPopup.style.display = (quickAddPopup.style.display === 'flex') ? 'none' : 'flex';
-  });
-  document.getElementById('quickAddIncomeBtn').addEventListener('click', function () {
-    quickAddPopup.style.display = 'none';
-    switchTab('today');
-  });
-  document.getElementById('quickAddExpenseBtn').addEventListener('click', function () {
-    quickAddPopup.style.display = 'none';
-    switchTab('expenses');
-  });
-  document.addEventListener('click', function (e) {
-    if (quickAddPopup.style.display === 'flex' && !quickAddPopup.contains(e.target)) {
-      quickAddPopup.style.display = 'none';
-    }
+  // ---- 底部中間「+」統一新增表單 ----
+  document.getElementById('quickAddBtn').addEventListener('click', function () {
+    openAddSheet();
   });
 
   // ---- 收入總覽(天/週/月/年,單一可導覽期間) ----
@@ -1974,8 +2000,8 @@
     localStorage.setItem(EXPENSES_KEY, JSON.stringify(arr));
   }
 
-  function populateExpenseCategorySelect(selectedCategory) {
-    var sel = document.getElementById('expenseCategorySelect');
+  function populateExpenseCategorySelect(selectedCategory, targetSelectId) {
+    var sel = document.getElementById(targetSelectId || 'expenseCategorySelect');
     sel.innerHTML = '';
     var labels = loadCategoryLabels();
     CATEGORY_IDS.forEach(function (id) {
@@ -2037,10 +2063,10 @@
     var expenses = loadExpenses();
     if (editingExpenseId) {
       expenses = expenses.map(function (e) {
-        return e.id === editingExpenseId ? { id: e.id, date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: e.createdAt || new Date().toISOString() } : e;
+        return e.id === editingExpenseId ? { id: e.id, date: date, name: name, amount: amount, category: category, accountId: accountId, projectId: e.projectId || '', merchant: e.merchant || '', recurrence: e.recurrence || 'once', invoiceNumber: e.invoiceNumber || '', randomCode: e.randomCode || '', tags: e.tags || [], note: e.note || '', time: e.time || '', createdAt: e.createdAt || new Date().toISOString() } : e;
       });
     } else {
-      expenses.push({ id: uniqueId('e'), date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: new Date().toISOString() });
+      expenses.push({ id: uniqueId('e'), date: date, name: name, amount: amount, category: category, accountId: accountId, projectId: '', merchant: '', recurrence: 'once', invoiceNumber: '', randomCode: '', tags: [], note: '', time: '', createdAt: new Date().toISOString() });
     }
     saveExpensesList(expenses);
     resetExpenseForm();
@@ -2154,10 +2180,10 @@
     var transfers = loadTransfers();
     if (editingTransferId) {
       transfers = transfers.map(function (t) {
-        return t.id === editingTransferId ? { id: t.id, date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, createdAt: t.createdAt || new Date().toISOString() } : t;
+        return t.id === editingTransferId ? { id: t.id, date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, tags: t.tags || [], createdAt: t.createdAt || new Date().toISOString() } : t;
       });
     } else {
-      transfers.push({ id: uniqueId('t'), date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, createdAt: new Date().toISOString() });
+      transfers.push({ id: uniqueId('t'), date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, tags: [], createdAt: new Date().toISOString() });
     }
     saveTransfersList(transfers);
     resetTransferForm();
@@ -2197,8 +2223,8 @@
     localStorage.setItem(INCOMES_KEY, JSON.stringify(arr));
   }
 
-  function populateIncomeCategorySelect(selectedCategory) {
-    var sel = document.getElementById('incomeCategorySelect');
+  function populateIncomeCategorySelect(selectedCategory, targetSelectId) {
+    var sel = document.getElementById(targetSelectId || 'incomeCategorySelect');
     sel.innerHTML = '';
     var labels = loadIncomeCategoryLabels();
     INCOME_CATEGORY_IDS.forEach(function (id) {
@@ -2260,10 +2286,10 @@
     var incomes = loadIncomes();
     if (editingIncomeId) {
       incomes = incomes.map(function (i) {
-        return i.id === editingIncomeId ? { id: i.id, date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: i.createdAt || new Date().toISOString() } : i;
+        return i.id === editingIncomeId ? { id: i.id, date: date, name: name, amount: amount, category: category, accountId: accountId, projectId: i.projectId || '', merchant: i.merchant || '', recurrence: i.recurrence || 'once', invoiceNumber: i.invoiceNumber || '', randomCode: i.randomCode || '', tags: i.tags || [], note: i.note || '', time: i.time || '', createdAt: i.createdAt || new Date().toISOString() } : i;
       });
     } else {
-      incomes.push({ id: uniqueId('i'), date: date, name: name, amount: amount, category: category, accountId: accountId, createdAt: new Date().toISOString() });
+      incomes.push({ id: uniqueId('i'), date: date, name: name, amount: amount, category: category, accountId: accountId, projectId: '', merchant: '', recurrence: 'once', invoiceNumber: '', randomCode: '', tags: [], note: '', time: '', createdAt: new Date().toISOString() });
     }
     saveIncomesList(incomes);
     resetIncomeForm();
@@ -2303,6 +2329,216 @@
     });
   }
 
+  // ---- 統一新增/編輯表單 ----
+  var PROJECTS_KEY = 'taxiLedgerProjects';
+  var currentAddType = 'expense';
+  var currentAddTags = [];
+  var currentAddRecord = null;
+
+  function loadProjects() {
+    try {
+      var raw = localStorage.getItem(PROJECTS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveProjectsList(arr) {
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(arr));
+  }
+
+  function getAllUsedTags() {
+    var set = {};
+    loadExpenses().forEach(function (e) { (e.tags || []).forEach(function (t) { set[t] = true; }); });
+    loadIncomes().forEach(function (i) { (i.tags || []).forEach(function (t) { set[t] = true; }); });
+    return Object.keys(set);
+  }
+
+  function populateProjectSelect() {
+    var sel = document.getElementById('addProjectSelect');
+    sel.innerHTML = '<option value="">無專案</option>';
+    loadProjects().forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = (p.icon ? p.icon + ' ' : '') + p.name;
+      sel.appendChild(opt);
+    });
+    var addOpt = document.createElement('option');
+    addOpt.value = '__new__';
+    addOpt.textContent = '+ 新增專案';
+    sel.appendChild(addOpt);
+  }
+
+  function populateAddAccountSelects() {
+    ['addAccountSelect', 'addTransferFrom', 'addTransferTo'].forEach(function (id) {
+      var sel = document.getElementById(id);
+      sel.innerHTML = '';
+      if (id === 'addAccountSelect') {
+        var noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '— 未指定帳戶 —';
+        sel.appendChild(noneOpt);
+      }
+      loadAccounts().filter(function (a) { return !a.archived; }).forEach(function (a) {
+        var opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name + '(' + ACCOUNT_TYPE_LABEL[a.type] + ')';
+        sel.appendChild(opt);
+      });
+    });
+  }
+
+  function populateCategorySelectForType(type, selectedCategory) {
+    if (type === 'expense') populateExpenseCategorySelect(selectedCategory, 'addCategorySelect');
+    if (type === 'income') populateIncomeCategorySelect(selectedCategory, 'addCategorySelect');
+  }
+
+  function renderAddTagsChips() {
+    var box = document.getElementById('addTagsChips');
+    box.innerHTML = '';
+    currentAddTags.forEach(function (t, i) {
+      var chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.innerHTML = '#' + t + ' <span class="rm">✕</span>';
+      chip.querySelector('.rm').addEventListener('click', function () {
+        currentAddTags.splice(i, 1);
+        renderAddTagsChips();
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function renderAddTagSuggestions() {
+    var box = document.getElementById('addTagSuggestions');
+    box.innerHTML = '';
+    getAllUsedTags().slice(0, 10).forEach(function (t) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = '#' + t;
+      chip.addEventListener('click', function () {
+        if (currentAddTags.indexOf(t) === -1) {
+          currentAddTags.push(t);
+          renderAddTagsChips();
+        }
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function setAddSheetType(type) {
+    currentAddType = type;
+    document.querySelectorAll('#addSheetTypeTabs .seg-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-type') === type);
+    });
+    document.getElementById('addSheetMoneyFields').style.display = (type === 'transfer') ? 'none' : 'block';
+    document.getElementById('addSheetTransferFields').style.display = (type === 'transfer') ? 'block' : 'none';
+    populateCategorySelectForType(type, currentAddRecord ? currentAddRecord.category : '');
+  }
+
+  function openAddSheet(existingRecord) {
+    currentAddRecord = existingRecord || null;
+    currentAddTags = existingRecord && existingRecord.tags ? existingRecord.tags.slice() : [];
+    var now = new Date();
+    var type = existingRecord && existingRecord.type ? existingRecord.type : 'expense';
+    document.getElementById('addSheetTitle').textContent = existingRecord ? '編輯記錄' : '新增記錄';
+    document.getElementById('addAmount').value = existingRecord ? existingRecord.amount : '';
+    document.getElementById('addName').value = existingRecord ? existingRecord.name : '';
+    document.getElementById('addMerchant').value = existingRecord ? (existingRecord.merchant || '') : '';
+    document.getElementById('addRecurrence').value = existingRecord ? (existingRecord.recurrence || 'once') : 'once';
+    document.getElementById('addDate').value = existingRecord ? existingRecord.date : todayKey();
+    document.getElementById('addTime').value = existingRecord ? (existingRecord.time || '') : pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+    document.getElementById('addInvoice').value = existingRecord ? (existingRecord.invoiceNumber || '') : '';
+    document.getElementById('addRandomCode').value = existingRecord ? (existingRecord.randomCode || '') : '';
+    document.getElementById('addTagInput').value = '';
+    document.getElementById('addNote').value = existingRecord ? (existingRecord.note || '') : '';
+    document.getElementById('addTransferAmount').value = existingRecord ? existingRecord.amount : '';
+    document.getElementById('addTransferDate').value = existingRecord ? existingRecord.date : todayKey();
+    document.getElementById('addTransferNote').value = existingRecord ? (existingRecord.note || '') : '';
+    populateAddAccountSelects();
+    populateProjectSelect();
+    document.getElementById('addAccountSelect').value = existingRecord ? (existingRecord.accountId || '') : '';
+    document.getElementById('addProjectSelect').value = existingRecord ? (existingRecord.projectId || '') : '';
+    document.getElementById('addTransferFrom').value = existingRecord ? (existingRecord.fromAccountId || '') : '';
+    document.getElementById('addTransferTo').value = existingRecord ? (existingRecord.toAccountId || '') : '';
+    renderAddTagsChips();
+    renderAddTagSuggestions();
+    setAddSheetType(type);
+    document.getElementById('addSheetDeleteBtn').style.display = existingRecord ? 'block' : 'none';
+    document.getElementById('addSheet').style.display = 'block';
+  }
+
+  document.getElementById('addSheetClose').addEventListener('click', function () {
+    document.getElementById('addSheet').style.display = 'none';
+  });
+
+  document.querySelectorAll('#addSheetTypeTabs .seg-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { setAddSheetType(btn.getAttribute('data-type')); });
+  });
+
+  document.getElementById('addProjectSelect').addEventListener('change', function () {
+    if (this.value === '__new__') {
+      var name = prompt('新專案名稱');
+      if (name && name.trim()) {
+        var projects = loadProjects();
+        var p = { id: uniqueId('proj'), name: name.trim(), icon: '' };
+        projects.push(p);
+        saveProjectsList(projects);
+        populateProjectSelect();
+        this.value = p.id;
+      } else {
+        this.value = '';
+      }
+    }
+  });
+
+  document.getElementById('addTagInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var val = this.value.trim().replace(/^#/, '');
+      if (val && currentAddTags.indexOf(val) === -1) {
+        currentAddTags.push(val);
+        renderAddTagsChips();
+      }
+      this.value = '';
+    }
+  });
+
+  document.getElementById('addSheetConfirm').addEventListener('click', function () {
+    var createdAt = currentAddRecord && currentAddRecord.createdAt ? currentAddRecord.createdAt : new Date().toISOString();
+    if (currentAddType === 'transfer') {
+      var transferAmount = parseFloat(document.getElementById('addTransferAmount').value);
+      var fromAccountId = document.getElementById('addTransferFrom').value;
+      var toAccountId = document.getElementById('addTransferTo').value;
+      var transferDate = document.getElementById('addTransferDate').value;
+      if (!transferDate || !fromAccountId || !toAccountId || isNaN(transferAmount)) { alert('請選擇帳戶並輸入日期跟金額'); return; }
+      if (fromAccountId === toAccountId) { alert('來源帳戶跟目標帳戶不能一樣'); return; }
+      var transfers = loadTransfers().filter(function (t) { return !currentAddRecord || t.id !== currentAddRecord.id; });
+      transfers.push({ id: currentAddRecord ? currentAddRecord.id : uniqueId('t'), amount: transferAmount, fromAccountId: fromAccountId, toAccountId: toAccountId, date: transferDate, note: document.getElementById('addTransferNote').value.trim(), tags: [], createdAt: createdAt });
+      saveTransfersList(transfers);
+      renderAccounts();
+      renderTransferList();
+    } else {
+      var amount = parseFloat(document.getElementById('addAmount').value);
+      var date = document.getElementById('addDate').value;
+      var name = document.getElementById('addName').value.trim();
+      if (!date || !name || isNaN(amount)) { alert('請輸入日期、名稱跟金額'); return; }
+      var record = { id: currentAddRecord ? currentAddRecord.id : uniqueId(currentAddType === 'expense' ? 'e' : 'i'), date: date, time: document.getElementById('addTime').value, name: name, amount: amount, category: document.getElementById('addCategorySelect').value, accountId: document.getElementById('addAccountSelect').value, projectId: document.getElementById('addProjectSelect').value, merchant: document.getElementById('addMerchant').value.trim(), recurrence: document.getElementById('addRecurrence').value, invoiceNumber: document.getElementById('addInvoice').value.trim(), randomCode: document.getElementById('addRandomCode').value.trim(), tags: currentAddTags.slice(), note: document.getElementById('addNote').value.trim(), createdAt: createdAt };
+      if (currentAddType === 'expense') {
+        var expenses = loadExpenses().filter(function (e) { return !currentAddRecord || e.id !== currentAddRecord.id; });
+        expenses.push(record);
+        saveExpensesList(expenses);
+      } else {
+        var incomes = loadIncomes().filter(function (i) { return !currentAddRecord || i.id !== currentAddRecord.id; });
+        incomes.push(record);
+        saveIncomesList(incomes);
+        renderIncomeList();
+      }
+      renderCalendar();
+      renderAccounts();
+    }
+    document.getElementById('addSheet').style.display = 'none';
+  });
+
   // ---- 資料備份(匯出/匯入,合併不覆蓋) ----
   document.getElementById('exportBtn').addEventListener('click', function () {
     var data = {};
@@ -2316,6 +2552,7 @@
     data[INCOMES_KEY] = loadIncomes();
     data[INCOME_CATEGORY_LABELS_KEY] = loadIncomeCategoryLabels();
     data[TRANSFERS_KEY] = loadTransfers();
+    data[PROJECTS_KEY] = loadProjects();
     var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -2379,6 +2616,9 @@
           loadTransfers().forEach(function (t) { byTrId[t.id] = t; });
           data[TRANSFERS_KEY].forEach(function (t) { byTrId[t.id] = t; });
           saveTransfersList(Object.keys(byTrId).map(function (k) { return byTrId[k]; }));
+        }
+        if (Array.isArray(data[PROJECTS_KEY])) {
+          saveProjectsList(data[PROJECTS_KEY]);
         }
         if (data[CATEGORY_LABELS_KEY]) { saveCategoryLabels(data[CATEGORY_LABELS_KEY]); }
         if (data[INCOME_CATEGORY_LABELS_KEY]) { saveIncomeCategoryLabels(data[INCOME_CATEGORY_LABELS_KEY]); }
