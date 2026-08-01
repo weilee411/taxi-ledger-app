@@ -56,6 +56,8 @@
   .recon-field label { display: block; font-size: 13px; color: var(--ink-muted); font-weight: 600; margin-bottom: 4px; }
   .recon-field input, .recon-field select { display: block; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); font-variant-numeric: tabular-nums; -webkit-appearance: none; appearance: none; }
   .recon-field input[type="date"] { min-width: 0; }
+  .recon-field label.split-toggle-label { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); }
+  .recon-field .split-toggle-label input { display:inline-block; width:auto; padding:0; -webkit-appearance:auto; appearance:auto; }
   .account-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px; border-bottom: 1px solid var(--border); cursor: pointer; gap: 10px; }
   .account-row:last-child { border-bottom: none; }
   .account-row.archived { opacity: .5; }
@@ -439,6 +441,17 @@
       <div class="recon-field"><label for="reconAmount">金額</label><input type="text" inputmode="decimal" id="reconAmount" placeholder="0"></div>
       <div class="recon-field"><label for="reconDate">日期</label><input type="date" id="reconDate"></div>
       <div class="recon-field"><label for="reconAccountSelect">入帳到哪個帳戶</label><select id="reconAccountSelect"></select></div>
+      <div class="recon-field">
+        <label class="split-toggle-label">
+          <input type="checkbox" id="reconSplitToggle">
+          這筆入帳裡包含額外收入(不計入對帳)
+        </label>
+      </div>
+      <div id="reconSplitFields" style="display:none;">
+        <div class="recon-field"><label for="reconSplitAmount">額外收入金額</label><input type="text" inputmode="decimal" id="reconSplitAmount" placeholder="0"></div>
+        <div class="recon-field"><label for="reconSplitName">名稱</label><input type="text" id="reconSplitName" placeholder="例如:過路費補貼" maxlength="20"></div>
+        <div class="recon-field"><label for="reconSplitCategory">分類</label><select id="reconSplitCategory"></select></div>
+      </div>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button type="button" class="btn" id="reconSaveBtn" style="flex:1">儲存這筆入帳</button>
         <button type="button" class="btn ghost small" id="reconDeleteBtn" style="display:none;">刪除</button>
@@ -1479,6 +1492,11 @@
     document.getElementById('reconFormTitle').textContent = '新增銀行入帳';
     document.getElementById('reconSaveBtn').textContent = '儲存這筆入帳';
     document.getElementById('reconDeleteBtn').style.display = 'none';
+    document.getElementById('reconSplitToggle').checked = false;
+    document.getElementById('reconSplitFields').style.display = 'none';
+    document.getElementById('reconSplitAmount').value = '';
+    document.getElementById('reconSplitName').value = '';
+    document.getElementById('reconSplitCategory').value = '';
     populateReconAccountSelect('');
   }
 
@@ -1489,8 +1507,22 @@
     document.getElementById('reconFormTitle').textContent = '編輯這筆入帳';
     document.getElementById('reconSaveBtn').textContent = '更新這筆入帳';
     document.getElementById('reconDeleteBtn').style.display = 'block';
+    document.getElementById('reconSplitToggle').checked = false;
+    document.getElementById('reconSplitFields').style.display = 'none';
+    document.getElementById('reconSplitAmount').value = '';
+    document.getElementById('reconSplitName').value = '';
+    document.getElementById('reconSplitCategory').value = '';
     populateReconAccountSelect(dep.accountId);
   }
+
+  document.getElementById('reconSplitToggle').addEventListener('change', function () {
+    document.getElementById('reconSplitFields').style.display = this.checked ? 'block' : 'none';
+    if (!this.checked) {
+      document.getElementById('reconSplitAmount').value = '';
+      document.getElementById('reconSplitName').value = '';
+    }
+    if (this.checked) populateIncomeCategorySelect('', 'reconSplitCategory');
+  });
 
   document.getElementById('reconPlatformSelect').addEventListener('change', function () {
     selectedReconPlatform = this.value;
@@ -1502,6 +1534,9 @@
     var amount = parseFloat(document.getElementById('reconAmount').value);
     var date = document.getElementById('reconDate').value;
     var accountId = document.getElementById('reconAccountSelect').value;
+    var splitToggle = document.getElementById('reconSplitToggle');
+    var splitAmount = parseFloat(document.getElementById('reconSplitAmount').value);
+    var shouldSplit = !editingDepositId && splitToggle.checked && !isNaN(splitAmount);
     if (isNaN(amount) || !date) { alert('請輸入金額跟日期'); return; }
     var deposits = loadDeposits();
     if (editingDepositId) {
@@ -1509,11 +1544,17 @@
         return d.id === editingDepositId ? { id: d.id, amount: amount, date: date, platform: d.platform, accountId: accountId, createdAt: d.createdAt || new Date().toISOString() } : d;
       });
     } else {
-      deposits.push({ id: uniqueId('d'), amount: amount, date: date, platform: selectedReconPlatform, accountId: accountId, createdAt: new Date().toISOString() });
+      deposits.push({ id: uniqueId('d'), amount: shouldSplit ? amount - splitAmount : amount, date: date, platform: selectedReconPlatform, accountId: accountId, createdAt: new Date().toISOString() });
+      if (shouldSplit) {
+        var incomes = loadIncomes();
+        incomes.push({ id: uniqueId('i'), date: date, time: '', name: document.getElementById('reconSplitName').value.trim() || '額外收入', amount: splitAmount, category: document.getElementById('reconSplitCategory').value, accountId: accountId, projectId: '', merchant: '', recurrence: 'once', invoiceNumber: '', randomCode: '', tags: ['對帳拆分'], note: '', createdAt: new Date().toISOString() });
+        saveIncomesList(incomes);
+      }
     }
     saveDepositsList(deposits);
     resetReconForm();
     renderRecon();
+    if (shouldSplit) renderIncomeList();
   });
 
   document.getElementById('reconDeleteBtn').addEventListener('click', function () {
