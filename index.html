@@ -416,7 +416,7 @@
 
     <div class="card">
       <h2>期初待收款</h2>
-      <p class="settings-hint">如果開始用這個功能之前,就已經有還沒入帳的舊收入,在這裡設定一筆起點金額,對帳會從這筆開始累加,不用拆成哪一天賺的。</p>
+      <p class="settings-hint">如果開始用這個功能之前,就已經有還沒入帳的舊收入,在這裡設定一筆起點金額。設定之後,對帳計算只會看這天(含)以後的每日輸入跟入帳紀錄,這天之前的資料不會被刪除,只是不會出現在對帳的累加結果裡。</p>
       <div id="openingBalanceDisplay"></div>
       <div class="recon-field"><label for="openingAmount">金額</label><input type="text" inputmode="decimal" id="openingAmount" placeholder="0"></div>
       <div class="recon-field"><label for="openingDate">日期</label><input type="date" id="openingDate"></div>
@@ -1530,12 +1530,16 @@
   }
 
   function buildReconRows(platform) {
-    var estMap = buildEstimatesForPlatform(platform);
     var ob = getOpeningBalance(platform);
+    var estMap = buildEstimatesForPlatform(platform);
+    var deposits = loadDeposits().filter(function (d) { return d.platform === platform; });
     if (ob) {
+      Object.keys(estMap).forEach(function (d) {
+        if (d < ob.date) delete estMap[d];
+      });
+      deposits = deposits.filter(function (d) { return d.date >= ob.date; });
       estMap[ob.date] = (estMap[ob.date] || 0) + ob.amount;
     }
-    var deposits = loadDeposits().filter(function (d) { return d.platform === platform; });
     var actualMap = {};
     deposits.forEach(function (dep) { actualMap[dep.date] = (actualMap[dep.date] || 0) + (dep.amount || 0); });
     var allDates = {};
@@ -1568,7 +1572,7 @@
       saveBtn.textContent = '儲存期初待收款';
       return;
     }
-    display.innerHTML = '<p>目前設定:' + ob.date.replace(/-/g, '/') + ' 起,' + fmt(ob.amount) + (ob.note ? '(' + ob.note + ')' : '') + '</p>';
+    display.innerHTML = '<p>目前設定:' + ob.date.replace(/-/g, '/') + ' 起,' + fmt(ob.amount) + (ob.note ? '(' + ob.note + ')' : '') + '</p><p class="settings-hint">這天之前的每日輸入跟入帳紀錄,對帳計算會忽略(不會刪除,只是不列入這裡的累加)。</p>';
     amountInput.value = ob.amount;
     dateInput.value = ob.date;
     noteInput.value = ob.note;
