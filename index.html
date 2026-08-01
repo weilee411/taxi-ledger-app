@@ -211,6 +211,8 @@
   #addTagsChips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
   #addTagsChips .chip { padding:3px 8px; border-radius:12px; background:var(--pending); color:var(--accent-ink); font-size:12px; display:flex; align-items:center; gap:4px; }
   #addTagsChips .chip .rm { cursor:pointer; }
+  .txn-detail-icons { display:flex; gap:8px; margin-top:16px; }
+  .txn-detail-icons .btn { flex:1; }
 
   .foot { text-align:center; font-size: 12px; color: var(--ink-muted); margin: 24px 0 4px; line-height:1.6; }
 </style>
@@ -241,6 +243,24 @@
     </div>
     <div style="padding:0 16px 100px;">
       <div id="accountDetailList"></div>
+    </div>
+  </div>
+
+  <div id="txnDetailOverlay" class="detail-overlay" style="display:none">
+    <div class="detail-overlay-header">
+      <button type="button" class="cal-nav" id="txnDetailBackBtn" aria-label="返回">‹</button>
+      <span id="txnDetailTitle">交易明細</span><span style="width:36px;"></span>
+    </div>
+    <div style="padding:0 16px 100px;">
+      <div class="hero" style="margin-bottom:14px;"><div class="k"><span id="txnDetailTypeBadge" class="detail-tx-badge"></span> <span id="txnDetailName"></span></div><div class="v tnum" id="txnDetailAmount">$0</div></div>
+      <div class="recon-field" id="txnDetailAccountField"><label>帳戶</label><select id="txnDetailAccount"></select></div>
+      <div class="recon-field" id="txnDetailFromField" style="display:none;"><label>轉出帳戶</label><select id="txnDetailFrom"></select></div>
+      <div class="recon-field" id="txnDetailToField" style="display:none;"><label>轉入帳戶</label><select id="txnDetailTo"></select></div>
+      <div class="recon-field" id="txnDetailMerchantField"><label>商家</label><input type="text" id="txnDetailMerchant"></div>
+      <div class="recon-field" id="txnDetailRecurrenceField"><label>頻率</label><select id="txnDetailRecurrence"><option value="once">單次</option><option value="fixed">固定支出</option></select></div>
+      <div class="recon-field"><label>日期</label><input type="date" id="txnDetailDate"></div>
+      <div class="recon-field"><label>時間</label><input type="time" id="txnDetailTime"></div>
+      <div class="txn-detail-icons"><button type="button" class="btn ghost small" id="txnDetailRevertBtn">⟲ 復原</button><button type="button" class="btn ghost small" id="txnDetailDeleteBtn">🗑 刪除</button><button type="button" class="btn ghost small" id="txnDetailCopyBtn">⧉ 複製</button><button type="button" class="btn small" id="txnDetailEditBtn">✎ 編輯</button></div>
     </div>
   </div>
 
@@ -284,7 +304,13 @@
     </div>
   </div>
 
-  <div id="tab-today">
+  <div id="dayEditOverlay" class="detail-overlay" style="display:none">
+    <div class="detail-overlay-header">
+      <button type="button" class="cal-nav" id="dayEditBackBtn" aria-label="返回">‹</button>
+      <span id="dayEditTitle">今天</span>
+      <span style="width:36px;"></span>
+    </div>
+    <div style="padding:0 16px 100px;">
     <div class="edit-banner" id="editBanner">
       <span id="editingDateLabel"></span>
       <button class="btn small ghost" id="backToToday">回到今天</button>
@@ -329,9 +355,16 @@
     </div>
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
+    </div>
+    <button type="button" class="fab-save-round" id="saveBtn" style="display:none;" aria-label="儲存今天">✓</button>
+  </div>
 
+  <div id="tab-today">
     <div class="card" style="margin-top:14px;">
-      <h2>歷史紀錄</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h2 style="margin:0;">歷史紀錄</h2>
+        <button type="button" class="btn ghost small" id="dayEditEntryBtn">✎ 編輯</button>
+      </div>
       <div class="cal-topbar">
         <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
         <div class="cal-mid">
@@ -365,8 +398,6 @@
 
     <div style="height:64px;"></div>
   </div>
-
-  <button type="button" class="fab-save-round" id="saveBtn" style="display:none;" aria-label="儲存今天">✓</button>
 
   <div id="tab-stats" style="display:none">
     <div class="card">
@@ -579,6 +610,7 @@
         <button type="button" class="seg-btn" data-type="transfer">轉帳</button>
       </div>
       <div id="addSheetMoneyFields" style="margin-top:14px;">
+        <div id="addSuggestRow" class="tag-suggest-row" style="margin-bottom:10px;"></div>
         <div class="recon-field"><label>金額</label><input type="text" inputmode="decimal" id="addAmount" placeholder="0"></div>
         <div class="recon-field"><label>名稱</label><input type="text" id="addName" maxlength="20"></div>
         <div id="addTagSuggestions" class="tag-suggest-row"></div>
@@ -599,6 +631,7 @@
         <div class="recon-field"><label>轉出帳戶</label><select id="addTransferFrom"></select></div>
         <div class="recon-field"><label>轉入帳戶</label><select id="addTransferTo"></select></div>
         <div class="recon-field"><label>日期</label><input type="date" id="addTransferDate"></div>
+        <div class="recon-field"><label>時間</label><input type="time" id="addTransferTime"></div>
         <div class="recon-field"><label>備註</label><textarea id="addTransferNote" rows="3"></textarea></div>
       </div>
       <button type="button" class="btn ghost small" id="addSheetDeleteBtn" style="display:none;">刪除這筆</button>
@@ -1094,8 +1127,15 @@
     var row = e.target.closest('.recent-item');
     if (!row) return;
     loadDateIntoForm(row.getAttribute('data-date'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  function openDayEditOverlay() {
+    document.getElementById('dayEditTitle').textContent = editingDate === todayKey() ? '今天' : formatDateLabel(editingDate) + ' 編輯';
+    document.getElementById('dayEditOverlay').style.display = 'block';
+    document.getElementById('dayEditOverlay').scrollTop = 0;
+  }
+  document.getElementById('dayEditBackBtn').addEventListener('click', function () { document.getElementById('dayEditOverlay').style.display = 'none'; });
+  document.getElementById('dayEditEntryBtn').addEventListener('click', openDayEditOverlay);
 
   function renderRecentExpenseList() {
     var earliest = new Date();
@@ -1163,7 +1203,6 @@
     var cell = e.target.closest('.cal-cell:not(.empty)');
     if (!cell) return;
     loadDateIntoForm(cell.getAttribute('data-date'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   document.getElementById('calPrevBtn').addEventListener('click', function () {
@@ -1253,7 +1292,6 @@
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
     });
-    document.getElementById('saveBtn').style.display = (tab === 'today') ? 'block' : 'none';
     if (tab === 'today') renderCalendar();
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
@@ -2005,10 +2043,7 @@
         '<span class="recent-amt tnum ' + (item.amount < 0 ? '' : '') + '" style="color:' + (item.amount < 0 ? 'var(--expense)' : 'var(--income)') + '">' + (item.amount < 0 ? '-' : '+') + fmt(Math.abs(item.amount)) + '</span>';
       row.addEventListener('click', function () {
         document.getElementById('accountDetailOverlay').style.display = 'none';
-        if (item.type === 'expense') { switchTab('expenses'); loadExpenseIntoForm(item.ref); }
-        else if (item.type === 'income') { switchTab('incomes'); loadIncomeIntoForm(item.ref); }
-        else { switchTab('accounts'); loadTransferIntoForm(item.ref); }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        openTxnDetail(item.ref, item.type);
       });
       container.appendChild(row);
     });
@@ -2025,6 +2060,56 @@
     loadAccountIntoForm(acc);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  var currentTxnType = null;
+  var currentTxnRecord = null;
+  var txnDetailSnapshot = null;
+
+  function populateTxnDetailAccountSelects() {
+    ['txnDetailAccount', 'txnDetailFrom', 'txnDetailTo'].forEach(function (id) {
+      var sel = document.getElementById(id); sel.innerHTML = '';
+      if (id === 'txnDetailAccount') { var none = document.createElement('option'); none.value = ''; none.textContent = '— 未指定帳戶 —'; sel.appendChild(none); }
+      loadAccounts().filter(function (a) { return !a.archived; }).forEach(function (a) { var opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name + '(' + ACCOUNT_TYPE_LABEL[a.type] + ')'; sel.appendChild(opt); });
+    });
+  }
+
+  function openTxnDetail(record, type) {
+    currentTxnType = type; currentTxnRecord = record;
+    var badgeLabel = { expense: '支出', income: '收入', transfer: '轉帳' };
+    var badge = document.getElementById('txnDetailTypeBadge'); badge.textContent = badgeLabel[type]; badge.className = 'detail-tx-badge tx-' + type;
+    document.getElementById('txnDetailName').textContent = type === 'transfer' ? (record.note || '轉帳') : record.name;
+    document.getElementById('txnDetailAmount').textContent = fmt(record.amount);
+    var isTransfer = type === 'transfer';
+    document.getElementById('txnDetailAccountField').style.display = isTransfer ? 'none' : 'block';
+    document.getElementById('txnDetailFromField').style.display = isTransfer ? 'block' : 'none'; document.getElementById('txnDetailToField').style.display = isTransfer ? 'block' : 'none';
+    document.getElementById('txnDetailMerchantField').style.display = isTransfer ? 'none' : 'block'; document.getElementById('txnDetailRecurrenceField').style.display = isTransfer ? 'none' : 'block';
+    populateTxnDetailAccountSelects();
+    if (isTransfer) { document.getElementById('txnDetailFrom').value = record.fromAccountId || ''; document.getElementById('txnDetailTo').value = record.toAccountId || ''; }
+    else { document.getElementById('txnDetailAccount').value = record.accountId || ''; document.getElementById('txnDetailMerchant').value = record.merchant || ''; document.getElementById('txnDetailRecurrence').value = record.recurrence || 'once'; }
+    document.getElementById('txnDetailDate').value = record.date; document.getElementById('txnDetailTime').value = record.time || '';
+    txnDetailSnapshot = { accountId: record.accountId, fromAccountId: record.fromAccountId, toAccountId: record.toAccountId, merchant: record.merchant, recurrence: record.recurrence, date: record.date, time: record.time };
+    document.getElementById('txnDetailOverlay').style.display = 'block'; document.getElementById('txnDetailOverlay').scrollTop = 0;
+  }
+
+  function saveTxnDetailInlineEdit() {
+    if (!currentTxnRecord) return;
+    if (currentTxnType === 'expense') {
+      var expenses = loadExpenses().map(function (e) { return e.id !== currentTxnRecord.id ? e : Object.assign({}, e, { accountId: document.getElementById('txnDetailAccount').value, merchant: document.getElementById('txnDetailMerchant').value.trim(), recurrence: document.getElementById('txnDetailRecurrence').value, date: document.getElementById('txnDetailDate').value, time: document.getElementById('txnDetailTime').value }); });
+      saveExpensesList(expenses); currentTxnRecord = expenses.find(function (e) { return e.id === currentTxnRecord.id; }); renderCalendar(); renderAccounts();
+    } else if (currentTxnType === 'income') {
+      var incomes = loadIncomes().map(function (i) { return i.id !== currentTxnRecord.id ? i : Object.assign({}, i, { accountId: document.getElementById('txnDetailAccount').value, merchant: document.getElementById('txnDetailMerchant').value.trim(), recurrence: document.getElementById('txnDetailRecurrence').value, date: document.getElementById('txnDetailDate').value, time: document.getElementById('txnDetailTime').value }); });
+      saveIncomesList(incomes); currentTxnRecord = incomes.find(function (i) { return i.id === currentTxnRecord.id; }); renderIncomeList(); renderAccounts();
+    } else {
+      var transfers = loadTransfers().map(function (t) { return t.id !== currentTxnRecord.id ? t : Object.assign({}, t, { fromAccountId: document.getElementById('txnDetailFrom').value, toAccountId: document.getElementById('txnDetailTo').value, date: document.getElementById('txnDetailDate').value, time: document.getElementById('txnDetailTime').value }); });
+      saveTransfersList(transfers); currentTxnRecord = transfers.find(function (t) { return t.id === currentTxnRecord.id; }); renderAccounts(); renderTransferList();
+    }
+  }
+  ['txnDetailAccount','txnDetailFrom','txnDetailTo','txnDetailMerchant','txnDetailRecurrence','txnDetailDate','txnDetailTime'].forEach(function (id) { document.getElementById(id).addEventListener('change', saveTxnDetailInlineEdit); });
+  document.getElementById('txnDetailBackBtn').addEventListener('click', function () { document.getElementById('txnDetailOverlay').style.display = 'none'; });
+  document.getElementById('txnDetailEditBtn').addEventListener('click', function () { document.getElementById('txnDetailOverlay').style.display = 'none'; openAddSheet(Object.assign({}, currentTxnRecord, { type: currentTxnType })); });
+  document.getElementById('txnDetailCopyBtn').addEventListener('click', function () { document.getElementById('txnDetailOverlay').style.display = 'none'; var copy = Object.assign({}, currentTxnRecord, { type: currentTxnType }); delete copy.id; delete copy.createdAt; openAddSheet(copy); });
+  document.getElementById('txnDetailDeleteBtn').addEventListener('click', function () { if (!confirm('刪除這筆紀錄?')) return; if (currentTxnType === 'expense') { saveExpensesList(loadExpenses().filter(function (e) { return e.id !== currentTxnRecord.id; })); renderCalendar(); } else if (currentTxnType === 'income') { saveIncomesList(loadIncomes().filter(function (i) { return i.id !== currentTxnRecord.id; })); renderIncomeList(); } else { saveTransfersList(loadTransfers().filter(function (t) { return t.id !== currentTxnRecord.id; })); } renderAccounts(); renderTransferList(); document.getElementById('txnDetailOverlay').style.display = 'none'; });
+  document.getElementById('txnDetailRevertBtn').addEventListener('click', function () { if (currentTxnType === 'transfer') { document.getElementById('txnDetailFrom').value = txnDetailSnapshot.fromAccountId || ''; document.getElementById('txnDetailTo').value = txnDetailSnapshot.toAccountId || ''; } else { document.getElementById('txnDetailAccount').value = txnDetailSnapshot.accountId || ''; document.getElementById('txnDetailMerchant').value = txnDetailSnapshot.merchant || ''; document.getElementById('txnDetailRecurrence').value = txnDetailSnapshot.recurrence || 'once'; } document.getElementById('txnDetailDate').value = txnDetailSnapshot.date; document.getElementById('txnDetailTime').value = txnDetailSnapshot.time || ''; saveTxnDetailInlineEdit(); });
 
   // ---- 支出明細(逐筆記錄,獨立於「今日輸入」,可分類+可選帳戶) ----
   var EXPENSES_KEY = 'taxiLedgerExpenses';
@@ -2149,9 +2234,7 @@
         '<span class="recent-date tnum">' + formatDateLabel(exp.date) + timeLabel + ' ' + exp.name + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
         '<span class="recent-amt tnum">' + fmt(exp.amount) + '</span>';
       row.addEventListener('click', function () {
-        switchTab('expenses');
-        loadExpenseIntoForm(exp);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        openTxnDetail(exp, 'expense');
       });
       container.appendChild(row);
     });
@@ -2211,6 +2294,7 @@
   document.getElementById('goToIncomesBtn').addEventListener('click', function () { switchTab('incomes'); });
 
   document.getElementById('transferSaveBtn').addEventListener('click', function () {
+    var now = new Date();
     var date = document.getElementById('transferDate').value;
     var fromAccountId = document.getElementById('transferFromSelect').value;
     var toAccountId = document.getElementById('transferToSelect').value;
@@ -2221,10 +2305,10 @@
     var transfers = loadTransfers();
     if (editingTransferId) {
       transfers = transfers.map(function (t) {
-        return t.id === editingTransferId ? { id: t.id, date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, tags: t.tags || [], createdAt: t.createdAt || new Date().toISOString() } : t;
+        return t.id === editingTransferId ? { id: t.id, date: date, time: t.time || '', fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, tags: t.tags || [], createdAt: t.createdAt || now.toISOString() } : t;
       });
     } else {
-      transfers.push({ id: uniqueId('t'), date: date, fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, tags: [], createdAt: new Date().toISOString() });
+      transfers.push({ id: uniqueId('t'), date: date, time: pad2(now.getHours()) + ':' + pad2(now.getMinutes()), fromAccountId: fromAccountId, toAccountId: toAccountId, amount: amount, note: note, tags: [], createdAt: now.toISOString() });
     }
     saveTransfersList(transfers);
     resetTransferForm();
@@ -2363,8 +2447,7 @@
         '<span class="recent-date tnum">' + formatDateLabel(inc.date) + ' ' + inc.name + '<br><span style="font-size:12px; color:var(--ink-muted); font-weight:400;">' + sub + '</span></span>' +
         '<span class="recent-amt tnum">' + fmt(inc.amount) + '</span>';
       row.addEventListener('click', function () {
-        loadIncomeIntoForm(inc);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        openTxnDetail(inc, 'income');
       });
       container.appendChild(row);
     });
@@ -2466,6 +2549,27 @@
     });
   }
 
+  function getSuggestions(type) {
+    var records = (type === 'expense' ? loadExpenses() : loadIncomes()).slice();
+    records.sort(function (a, b) { if (a.date !== b.date) return b.date.localeCompare(a.date); return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+    var seen = {}; var list = [];
+    records.forEach(function (r) { if (seen[r.name]) return; seen[r.name] = true; list.push(r); });
+    return list.slice(0, 5);
+  }
+
+  function renderAddSuggestions() {
+    var box = document.getElementById('addSuggestRow'); box.innerHTML = '';
+    if (currentAddRecord || currentAddType === 'transfer') { box.style.display = 'none'; return; }
+    var suggestions = getSuggestions(currentAddType);
+    if (!suggestions.length) { box.style.display = 'none'; return; }
+    box.style.display = 'flex';
+    suggestions.forEach(function (r) {
+      var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'chip'; chip.textContent = r.name;
+      chip.addEventListener('click', function () { document.getElementById('addName').value = r.name; document.getElementById('addAmount').value = r.amount; document.getElementById('addMerchant').value = r.merchant || ''; populateCategorySelectForType(currentAddType, r.category); document.getElementById('addAccountSelect').value = r.accountId || ''; });
+      box.appendChild(chip);
+    });
+  }
+
   function setAddSheetType(type) {
     currentAddType = type;
     document.querySelectorAll('#addSheetTypeTabs .seg-btn').forEach(function (b) {
@@ -2474,6 +2578,7 @@
     document.getElementById('addSheetMoneyFields').style.display = (type === 'transfer') ? 'none' : 'block';
     document.getElementById('addSheetTransferFields').style.display = (type === 'transfer') ? 'block' : 'none';
     populateCategorySelectForType(type, currentAddRecord ? currentAddRecord.category : '');
+    renderAddSuggestions();
   }
 
   function openAddSheet(existingRecord) {
@@ -2481,7 +2586,7 @@
     currentAddTags = existingRecord && existingRecord.tags ? existingRecord.tags.slice() : [];
     var now = new Date();
     var type = existingRecord && existingRecord.type ? existingRecord.type : 'expense';
-    document.getElementById('addSheetTitle').textContent = existingRecord ? '編輯記錄' : '新增記錄';
+    document.getElementById('addSheetTitle').textContent = existingRecord && existingRecord.id ? '編輯記錄' : '新增記錄';
     document.getElementById('addAmount').value = existingRecord ? existingRecord.amount : '';
     document.getElementById('addName').value = existingRecord ? existingRecord.name : '';
     document.getElementById('addMerchant').value = existingRecord ? (existingRecord.merchant || '') : '';
@@ -2494,6 +2599,7 @@
     document.getElementById('addNote').value = existingRecord ? (existingRecord.note || '') : '';
     document.getElementById('addTransferAmount').value = existingRecord ? existingRecord.amount : '';
     document.getElementById('addTransferDate').value = existingRecord ? existingRecord.date : todayKey();
+    document.getElementById('addTransferTime').value = existingRecord ? (existingRecord.time || '') : pad2(now.getHours()) + ':' + pad2(now.getMinutes());
     document.getElementById('addTransferNote').value = existingRecord ? (existingRecord.note || '') : '';
     populateAddAccountSelects();
     populateProjectSelect();
@@ -2504,7 +2610,7 @@
     renderAddTagsChips();
     renderAddTagSuggestions();
     setAddSheetType(type);
-    document.getElementById('addSheetDeleteBtn').style.display = existingRecord ? 'block' : 'none';
+    document.getElementById('addSheetDeleteBtn').style.display = existingRecord && existingRecord.id ? 'block' : 'none';
     document.getElementById('addSheet').style.display = 'block';
   }
 
@@ -2554,7 +2660,7 @@
       if (!transferDate || !fromAccountId || !toAccountId || isNaN(transferAmount)) { alert('請選擇帳戶並輸入日期跟金額'); return; }
       if (fromAccountId === toAccountId) { alert('來源帳戶跟目標帳戶不能一樣'); return; }
       var transfers = loadTransfers().filter(function (t) { return !currentAddRecord || t.id !== currentAddRecord.id; });
-      transfers.push({ id: currentAddRecord ? currentAddRecord.id : uniqueId('t'), amount: transferAmount, fromAccountId: fromAccountId, toAccountId: toAccountId, date: transferDate, note: document.getElementById('addTransferNote').value.trim(), tags: [], createdAt: createdAt });
+      transfers.push({ id: currentAddRecord && currentAddRecord.id ? currentAddRecord.id : uniqueId('t'), amount: transferAmount, fromAccountId: fromAccountId, toAccountId: toAccountId, date: transferDate, time: document.getElementById('addTransferTime').value, note: document.getElementById('addTransferNote').value.trim(), tags: [], createdAt: createdAt });
       saveTransfersList(transfers);
       renderAccounts();
       renderTransferList();
@@ -2563,7 +2669,7 @@
       var date = document.getElementById('addDate').value;
       var name = document.getElementById('addName').value.trim();
       if (!date || !name || isNaN(amount)) { alert('請輸入日期、名稱跟金額'); return; }
-      var record = { id: currentAddRecord ? currentAddRecord.id : uniqueId(currentAddType === 'expense' ? 'e' : 'i'), date: date, time: document.getElementById('addTime').value, name: name, amount: amount, category: document.getElementById('addCategorySelect').value, accountId: document.getElementById('addAccountSelect').value, projectId: document.getElementById('addProjectSelect').value, merchant: document.getElementById('addMerchant').value.trim(), recurrence: document.getElementById('addRecurrence').value, invoiceNumber: document.getElementById('addInvoice').value.trim(), randomCode: document.getElementById('addRandomCode').value.trim(), tags: currentAddTags.slice(), note: document.getElementById('addNote').value.trim(), createdAt: createdAt };
+      var record = { id: currentAddRecord && currentAddRecord.id ? currentAddRecord.id : uniqueId(currentAddType === 'expense' ? 'e' : 'i'), date: date, time: document.getElementById('addTime').value, name: name, amount: amount, category: document.getElementById('addCategorySelect').value, accountId: document.getElementById('addAccountSelect').value, projectId: document.getElementById('addProjectSelect').value, merchant: document.getElementById('addMerchant').value.trim(), recurrence: document.getElementById('addRecurrence').value, invoiceNumber: document.getElementById('addInvoice').value.trim(), randomCode: document.getElementById('addRandomCode').value.trim(), tags: currentAddTags.slice(), note: document.getElementById('addNote').value.trim(), createdAt: createdAt };
       if (currentAddType === 'expense') {
         var expenses = loadExpenses().filter(function (e) { return !currentAddRecord || e.id !== currentAddRecord.id; });
         expenses.push(record);
