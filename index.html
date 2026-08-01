@@ -304,13 +304,7 @@
     </div>
   </div>
 
-  <div id="dayEditOverlay" class="detail-overlay" style="display:none">
-    <div class="detail-overlay-header">
-      <button type="button" class="cal-nav" id="dayEditBackBtn" aria-label="返回">‹</button>
-      <span id="dayEditTitle">今天</span>
-      <span style="width:36px;"></span>
-    </div>
-    <div style="padding:0 16px 100px;">
+  <div id="tab-today">
     <div class="edit-banner" id="editBanner">
       <span id="editingDateLabel"></span>
       <button class="btn small ghost" id="backToToday">回到今天</button>
@@ -355,16 +349,9 @@
     </div>
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
-    </div>
-    <button type="button" class="fab-save-round" id="saveBtn" style="display:none;" aria-label="儲存今天">✓</button>
-  </div>
 
-  <div id="tab-today">
     <div class="card" style="margin-top:14px;">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <h2 style="margin:0;">歷史紀錄</h2>
-        <button type="button" class="btn ghost small" id="dayEditEntryBtn">✎ 編輯</button>
-      </div>
+      <h2>歷史紀錄</h2>
       <div class="cal-topbar">
         <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
         <div class="cal-mid">
@@ -398,6 +385,8 @@
 
     <div style="height:64px;"></div>
   </div>
+
+  <button type="button" class="fab-save-round" id="saveBtn" style="display:none;" aria-label="儲存今天">✓</button>
 
   <div id="tab-stats" style="display:none">
     <div class="card">
@@ -1127,15 +1116,8 @@
     var row = e.target.closest('.recent-item');
     if (!row) return;
     loadDateIntoForm(row.getAttribute('data-date'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-
-  function openDayEditOverlay() {
-    document.getElementById('dayEditTitle').textContent = editingDate === todayKey() ? '今天' : formatDateLabel(editingDate) + ' 編輯';
-    document.getElementById('dayEditOverlay').style.display = 'block';
-    document.getElementById('dayEditOverlay').scrollTop = 0;
-  }
-  document.getElementById('dayEditBackBtn').addEventListener('click', function () { document.getElementById('dayEditOverlay').style.display = 'none'; });
-  document.getElementById('dayEditEntryBtn').addEventListener('click', openDayEditOverlay);
 
   function renderRecentExpenseList() {
     var earliest = new Date();
@@ -1203,6 +1185,7 @@
     var cell = e.target.closest('.cal-cell:not(.empty)');
     if (!cell) return;
     loadDateIntoForm(cell.getAttribute('data-date'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   document.getElementById('calPrevBtn').addEventListener('click', function () {
@@ -1292,6 +1275,7 @@
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
     });
+    document.getElementById('saveBtn').style.display = (tab === 'today') ? 'block' : 'none';
     if (tab === 'today') renderCalendar();
     if (tab === 'stats') renderStats();
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
