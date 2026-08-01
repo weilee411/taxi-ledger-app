@@ -95,6 +95,8 @@
   .recon-day-date { color: var(--ink-muted); flex-shrink: 0; text-align: left; white-space: nowrap; }
   .recon-day-col { text-align: right; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
   .recon-day-col.strong { color: var(--ink); font-weight: 700; }
+  .opening-tag { font-size: 11px; background: var(--pending); color: var(--accent-ink); border-radius: 4px; padding: 1px 5px; margin-left: 4px; }
+  .recon-opening-row { background: rgba(255,255,255,0.03); }
   .recon-platform-select { width: 100%; font-size: 16px; font-weight: 700; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink); margin-bottom: 10px; }
 
   .inputgrp { display: flex; align-items: center; gap: 6px; }
@@ -409,6 +411,19 @@
       <div class="hero">
         <div class="k">尚未入帳</div>
         <div class="v tnum" id="reconOutstanding">$0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>期初待收款</h2>
+      <p class="settings-hint">如果開始用這個功能之前,就已經有還沒入帳的舊收入,在這裡設定一筆起點金額,對帳會從這筆開始累加,不用拆成哪一天賺的。</p>
+      <div id="openingBalanceDisplay"></div>
+      <div class="recon-field"><label for="openingAmount">金額</label><input type="text" inputmode="decimal" id="openingAmount" placeholder="0"></div>
+      <div class="recon-field"><label for="openingDate">日期</label><input type="date" id="openingDate"></div>
+      <div class="recon-field"><label for="openingNote">備註(選填)</label><input type="text" id="openingNote" placeholder="例如:7月舊帳太亂,重新起算"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" id="openingSaveBtn" style="flex:1">儲存期初待收款</button>
+        <button type="button" class="btn ghost small" id="openingClearBtn" style="display:none;">清除</button>
       </div>
     </div>
 
@@ -1351,6 +1366,7 @@
   var RECON_PLATFORMS = ['568', 'uber', 'bolt', 'yoxi', 'direct'];
   var RECON_KEY = 'taxiLedgerBankDeposits';
   var RECON_KEY_LEGACY_568 = 'taxiLedgerBankDeposits568'; // 舊版只有568時的key,讀一次做遷移用
+  var OPENING_KEY = 'taxiLedgerOpeningBalance';
   var editingDepositId = null;
   var selectedReconPlatform = '568';
 
@@ -1375,6 +1391,31 @@
 
   function saveDepositsList(arr) {
     localStorage.setItem(RECON_KEY, JSON.stringify(arr));
+  }
+
+  function loadOpeningBalances() {
+    try {
+      var raw = localStorage.getItem(OPENING_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveOpeningBalances(arr) {
+    localStorage.setItem(OPENING_KEY, JSON.stringify(arr));
+  }
+
+  function getOpeningBalance(platform) {
+    return loadOpeningBalances().find(function (o) { return o.platform === platform; }) || null;
+  }
+
+  function setOpeningBalance(platform, date, amount, note) {
+    var arr = loadOpeningBalances().filter(function (o) { return o.platform !== platform; });
+    arr.push({ platform: platform, date: date, amount: amount, note: note || '' });
+    saveOpeningBalances(arr);
+  }
+
+  function clearOpeningBalance(platform) {
+    saveOpeningBalances(loadOpeningBalances().filter(function (o) { return o.platform !== platform; }));
   }
 
   function populateReconPlatformSelect() {
@@ -1458,6 +1499,21 @@
     renderRecon();
   });
 
+  document.getElementById('openingSaveBtn').addEventListener('click', function () {
+    var amount = parseFloat(document.getElementById('openingAmount').value) || 0;
+    var date = document.getElementById('openingDate').value;
+    var note = document.getElementById('openingNote').value.trim();
+    if (!date) { alert('請選擇日期'); return; }
+    setOpeningBalance(selectedReconPlatform, date, amount, note);
+    renderRecon();
+  });
+
+  document.getElementById('openingClearBtn').addEventListener('click', function () {
+    if (!confirm('清除目前平台的期初待收款?')) return;
+    clearOpeningBalance(selectedReconPlatform);
+    renderRecon();
+  });
+
   function buildEstimatesForPlatform(platform) {
     var days = loadDays();
     var map = {};
@@ -1475,6 +1531,10 @@
 
   function buildReconRows(platform) {
     var estMap = buildEstimatesForPlatform(platform);
+    var ob = getOpeningBalance(platform);
+    if (ob) {
+      estMap[ob.date] = (estMap[ob.date] || 0) + ob.amount;
+    }
     var deposits = loadDeposits().filter(function (d) { return d.platform === platform; });
     var actualMap = {};
     deposits.forEach(function (dep) { actualMap[dep.date] = (actualMap[dep.date] || 0) + (dep.amount || 0); });
@@ -1487,8 +1547,33 @@
       var est = estMap[date] || 0;
       var act = actualMap[date] || 0;
       cumulative += (est - act);
-      return { date: date, est: est, act: act, cumulative: cumulative };
+      return { date: date, est: est, act: act, cumulative: cumulative, isOpening: !!(ob && ob.date === date) };
     });
+  }
+
+  function renderOpeningBalance() {
+    var ob = getOpeningBalance(selectedReconPlatform);
+    var display = document.getElementById('openingBalanceDisplay');
+    var amountInput = document.getElementById('openingAmount');
+    var dateInput = document.getElementById('openingDate');
+    var noteInput = document.getElementById('openingNote');
+    var clearBtn = document.getElementById('openingClearBtn');
+    var saveBtn = document.getElementById('openingSaveBtn');
+    if (!ob) {
+      display.innerHTML = '<p class="empty">目前沒有設定期初待收款</p>';
+      amountInput.value = '';
+      dateInput.value = '';
+      noteInput.value = '';
+      clearBtn.style.display = 'none';
+      saveBtn.textContent = '儲存期初待收款';
+      return;
+    }
+    display.innerHTML = '<p>目前設定:' + ob.date.replace(/-/g, '/') + ' 起,' + fmt(ob.amount) + (ob.note ? '(' + ob.note + ')' : '') + '</p>';
+    amountInput.value = ob.amount;
+    dateInput.value = ob.date;
+    noteInput.value = ob.note;
+    clearBtn.style.display = 'block';
+    saveBtn.textContent = '更新期初待收款';
   }
 
   function renderDepositList() {
@@ -1581,9 +1666,9 @@
           var d = new Date(row.date + 'T00:00:00');
           var wd = weekdayNames[d.getDay()];
           var el = document.createElement('div');
-          el.className = 'recon-day-row';
+          el.className = 'recon-day-row' + (row.isOpening ? ' recon-opening-row' : '');
           el.innerHTML =
-            '<span class="recon-day-date tnum">' + formatMD(d) + ' ' + wd + '</span>' +
+            '<span class="recon-day-date tnum">' + formatMD(d) + ' ' + wd + (row.isOpening ? ' <b class="opening-tag">期初</b>' : '') + '</span>' +
             '<span class="recon-day-col tnum">' + fmt(row.est) + '</span>' +
             '<span class="recon-day-col tnum">' + (row.act ? fmt(row.act) : '—') + '</span>' +
             '<span class="recon-day-col strong tnum">' + fmt(row.cumulative) + '</span>';
@@ -1599,6 +1684,7 @@
 
   function renderRecon() {
     populateReconPlatformSelect();
+    renderOpeningBalance();
     document.getElementById('reconIntro').textContent =
       reconPlatformLabel(selectedReconPlatform) + ' 逐日累加,不配對——預估入帳金額自動從「今日輸入」帶入,只需要記銀行實際入帳。';
     var rows = buildReconRows(selectedReconPlatform);
@@ -2219,6 +2305,7 @@
     data[STORAGE_KEY] = loadDays();
     data[LABELS_KEY] = loadLabels();
     data[RECON_KEY] = loadDeposits();
+    data[OPENING_KEY] = loadOpeningBalances();
     data[ACCOUNTS_KEY] = loadAccounts();
     data[EXPENSES_KEY] = loadExpenses();
     data[CATEGORY_LABELS_KEY] = loadCategoryLabels();
@@ -2261,6 +2348,9 @@
           loadDeposits().forEach(function (d) { byId[d.id] = d; });
           importedDeposits.forEach(function (d) { byId[d.id] = d; });
           saveDepositsList(Object.keys(byId).map(function (k) { return byId[k]; }));
+        }
+        if (Array.isArray(data[OPENING_KEY])) {
+          saveOpeningBalances(data[OPENING_KEY]);
         }
         if (Array.isArray(data[ACCOUNTS_KEY])) {
           var byAccId = {};
