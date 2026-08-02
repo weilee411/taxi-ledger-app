@@ -208,6 +208,11 @@
   .addsheet-close, .addsheet-confirm { width:36px; height:36px; border-radius:50%; border:none; background:var(--surface-alt); color:var(--ink); font-size:16px; }
   .tag-suggest-row { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px; }
   .tag-suggest-row .chip { padding:4px 10px; border-radius:14px; background:var(--surface-alt); border:1px solid var(--border); font-size:13px; }
+  .suggest-icon-grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:14px 6px; }
+  .suggest-icon-item { display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:none; cursor:pointer; padding:0; }
+  .suggest-icon-circle { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:700; flex-shrink:0; }
+  .suggest-icon-label { font-size:12px; color:var(--ink); text-align:center; line-height:1.2; max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .suggest-empty { grid-column: 1 / -1; text-align:center; color:var(--ink-muted); font-size:13px; padding:20px 0; }
   #addTagsChips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
   #addTagsChips .chip { padding:3px 8px; border-radius:12px; background:var(--pending); color:var(--accent-ink); font-size:12px; display:flex; align-items:center; gap:4px; }
   #addTagsChips .chip .rm { cursor:pointer; }
@@ -594,12 +599,15 @@
     </div>
     <div style="padding:0 16px 24px;">
       <div class="seg-group" id="addSheetTypeTabs">
+        <button type="button" class="seg-btn" data-type="suggest">建議</button>
         <button type="button" class="seg-btn active" data-type="expense">支出</button>
         <button type="button" class="seg-btn" data-type="income">收入</button>
         <button type="button" class="seg-btn" data-type="transfer">轉帳</button>
       </div>
+      <div id="addSuggestPanel" style="display:none; margin-top:14px;">
+        <div id="addSuggestGrid" class="suggest-icon-grid"></div>
+      </div>
       <div id="addSheetMoneyFields" style="margin-top:14px;">
-        <div id="addSuggestRow" class="tag-suggest-row" style="margin-bottom:10px;"></div>
         <div class="recon-field"><label>金額</label><input type="text" inputmode="decimal" id="addAmount" placeholder="0"></div>
         <div class="recon-field"><label>名稱</label><input type="text" id="addName" maxlength="20"></div>
         <div id="addTagSuggestions" class="tag-suggest-row"></div>
@@ -2539,24 +2547,49 @@
     });
   }
 
-  function getSuggestions(type) {
-    var records = (type === 'expense' ? loadExpenses() : loadIncomes()).slice();
-    records.sort(function (a, b) { if (a.date !== b.date) return b.date.localeCompare(a.date); return (b.createdAt || '').localeCompare(a.createdAt || ''); });
-    var seen = {}; var list = [];
-    records.forEach(function (r) { if (seen[r.name]) return; seen[r.name] = true; list.push(r); });
-    return list.slice(0, 5);
+  var SUGGEST_COLORS = ['#2B6A78', '#B5502F', '#2F8F5B', '#A97A26', '#6B4FA0', '#C24B7C', '#3D7BC2', '#5B8C3A'];
+
+  function colorForName(name) {
+    var sum = 0;
+    for (var i = 0; i < name.length; i++) sum += name.charCodeAt(i);
+    return SUGGEST_COLORS[sum % SUGGEST_COLORS.length];
   }
 
-  function renderAddSuggestions() {
-    var box = document.getElementById('addSuggestRow'); box.innerHTML = '';
-    if (currentAddRecord || currentAddType === 'transfer') { box.style.display = 'none'; return; }
-    var suggestions = getSuggestions(currentAddType);
-    if (!suggestions.length) { box.style.display = 'none'; return; }
-    box.style.display = 'flex';
+  function getSuggestions() {
+    var expenses = loadExpenses().map(function (r) { return Object.assign({}, r, { _type: 'expense' }); });
+    var incomes = loadIncomes().map(function (r) { return Object.assign({}, r, { _type: 'income' }); });
+    var records = expenses.concat(incomes);
+    records.sort(function (a, b) {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return (b.createdAt || '').localeCompare(a.createdAt || '');
+    });
+    var seen = {}; var list = [];
+    records.forEach(function (r) { if (seen[r.name]) return; seen[r.name] = true; list.push(r); });
+    return list.slice(0, 10);
+  }
+
+  function renderAddSuggestGrid() {
+    var box = document.getElementById('addSuggestGrid');
+    box.innerHTML = '';
+    var suggestions = getSuggestions();
+    if (!suggestions.length) {
+      box.innerHTML = '<p class="suggest-empty">還沒有可以建議的紀錄</p>';
+      return;
+    }
     suggestions.forEach(function (r) {
-      var chip = document.createElement('button'); chip.type = 'button'; chip.className = 'chip'; chip.textContent = r.name;
-      chip.addEventListener('click', function () { document.getElementById('addName').value = r.name; document.getElementById('addAmount').value = r.amount; document.getElementById('addMerchant').value = r.merchant || ''; populateCategorySelectForType(currentAddType, r.category); document.getElementById('addAccountSelect').value = r.accountId || ''; });
-      box.appendChild(chip);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'suggest-icon-item';
+      btn.innerHTML = '<span class="suggest-icon-circle" style="background:' + colorForName(r.name) + ';">' + r.name.charAt(0) + '</span>' + '<span class="suggest-icon-label">' + r.name + '</span>';
+      btn.addEventListener('click', function () {
+        setAddSheetType(r._type);
+        document.getElementById('addName').value = r.name;
+        document.getElementById('addAmount').value = r.amount;
+        document.getElementById('addMerchant').value = r.merchant || '';
+        populateCategorySelectForType(r._type, r.category);
+        document.getElementById('addAccountSelect').value = r.accountId || '';
+      });
+      box.appendChild(btn);
     });
   }
 
@@ -2565,17 +2598,22 @@
     document.querySelectorAll('#addSheetTypeTabs .seg-btn').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-type') === type);
     });
-    document.getElementById('addSheetMoneyFields').style.display = (type === 'transfer') ? 'none' : 'block';
+    document.getElementById('addSuggestPanel').style.display = (type === 'suggest') ? 'block' : 'none';
+    document.getElementById('addSheetMoneyFields').style.display = (type === 'expense' || type === 'income') ? 'block' : 'none';
     document.getElementById('addSheetTransferFields').style.display = (type === 'transfer') ? 'block' : 'none';
+    if (type === 'suggest') {
+      renderAddSuggestGrid();
+      return;
+    }
     populateCategorySelectForType(type, currentAddRecord ? currentAddRecord.category : '');
-    renderAddSuggestions();
   }
 
   function openAddSheet(existingRecord) {
     currentAddRecord = existingRecord || null;
     currentAddTags = existingRecord && existingRecord.tags ? existingRecord.tags.slice() : [];
     var now = new Date();
-    var type = existingRecord && existingRecord.type ? existingRecord.type : 'expense';
+    var type = existingRecord && existingRecord.type ? existingRecord.type : (existingRecord ? 'expense' : 'suggest');
+    document.querySelector('#addSheetTypeTabs .seg-btn[data-type="suggest"]').style.display = existingRecord ? 'none' : 'block';
     document.getElementById('addSheetTitle').textContent = existingRecord && existingRecord.id ? '編輯記錄' : '新增記錄';
     document.getElementById('addAmount').value = existingRecord ? existingRecord.amount : '';
     document.getElementById('addName').value = existingRecord ? existingRecord.name : '';
@@ -2641,6 +2679,7 @@
   });
 
   document.getElementById('addSheetConfirm').addEventListener('click', function () {
+    if (currentAddType === 'suggest') return;
     var createdAt = currentAddRecord && currentAddRecord.createdAt ? currentAddRecord.createdAt : new Date().toISOString();
     if (currentAddType === 'transfer') {
       var transferAmount = parseFloat(document.getElementById('addTransferAmount').value);
