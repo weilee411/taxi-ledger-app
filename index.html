@@ -420,7 +420,7 @@
         <button type="button" class="cal-nav small" id="statsNextBtn" aria-label="下一期">›</button>
       </div>
       <div class="hero" style="margin-top:12px;">
-        <div class="k">收入</div>
+        <div class="k">預估收入(已扣568抽成)</div>
         <div class="v tnum" id="statsCurTotal">$0</div>
       </div>
     </div>
@@ -765,6 +765,12 @@
 
   function dayTotal(d) {
     return (d.cash568||0) + (d.online568||0) + (d.uber||0) + (d.bolt||0) + (d.yoxi||0) + (d.direct||0) + (d.other||0);
+  }
+
+  // 跟「今日輸入」頁的「今日預估收入」同一套公式:568綁定套 calcNetOnline568 扣完抽成,其他平台已經是淨額直接加
+  function dayEstimatedTotal(d) {
+    var cash = d.cash568 || 0, online = d.online568 || 0;
+    return cash + calcNetOnline568(cash, online) + (d.uber||0) + (d.bolt||0) + (d.yoxi||0) + (d.direct||0) + (d.other||0);
   }
 
   var addPending = {}; // id -> total before this increment, while in add-mode
@@ -1337,7 +1343,7 @@
     var startStr = formatDateStr(start), endStr = formatDateStr(end);
     var sum = 0;
     days.forEach(function (d) {
-      if (d.date >= startStr && d.date <= endStr) sum += dayTotal(d);
+      if (d.date >= startStr && d.date <= endStr) sum += dayEstimatedTotal(d);
     });
     return sum;
   }
