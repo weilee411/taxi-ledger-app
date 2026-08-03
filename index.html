@@ -317,8 +317,17 @@
       <button class="btn small ghost" id="backToToday">回到今天</button>
     </div>
 
-    <div class="dayoff-row">
-      <button type="button" class="btn small ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
+    <div class="card">
+      <h2>工時記錄</h2>
+      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
+      <div class="punch-times">
+        <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
+        <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
+      </div>
+      <div class="hero" style="margin-top:10px;">
+        <div class="k" id="totalHoursLabel">今日總工時</div>
+        <div class="v tnum" id="totalHours">0.0</div>
+      </div>
     </div>
 
     <div class="stats">
@@ -373,13 +382,15 @@
 
     <div class="card">
       <h2>工時記錄</h2>
-      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
-      <div class="punch-times">
-        <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
-        <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
+      <div class="dayoff-row">
+        <button type="button" class="btn small ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
       </div>
-      <div class="stats" style="margin: 10px 0 0;">
-        <div class="stat"><div class="k" id="totalHoursLabel">今日總工時</div><div class="v tnum" id="totalHours">0.0</div></div>
+      <div class="stats">
+        <div class="stat"><div class="k">今日上班</div><div class="v tnum" id="homeTodayStart">--:--</div></div>
+        <div class="stat"><div class="k">今日下班</div><div class="v tnum" id="homeTodayEnd">--:--</div></div>
+        <div class="stat"><div class="k">今日總工時</div><div class="v tnum" id="homeTodayHours">0.0</div></div>
+      </div>
+      <div class="stats" style="margin-top:10px;">
         <div class="stat"><div class="k">本週總工時</div><div class="v tnum" id="weekHours">0.0</div></div>
         <div class="stat"><div class="k">本月總工時</div><div class="v tnum" id="monthHours">0.0</div></div>
       </div>
@@ -1005,18 +1016,33 @@
   var savedFeedbackActive = false;
 
   function updateDayOffButtonState() {
+    var todayEntry = loadDays().find(function (d) { return d.date === todayKey(); });
+    var isOff = todayEntry ? !!todayEntry.dayOff : false;
     var btn = document.getElementById('dayOffToggle');
-    btn.textContent = editingDayOff ? '☀️ 取消休假標記' : '🏖 標記為休假日';
-    btn.classList.toggle('active', editingDayOff);
+    btn.textContent = isOff ? '☀️ 取消休假標記' : '🏖 標記為休假日';
+    btn.classList.toggle('active', isOff);
   }
 
   document.getElementById('dayOffToggle').addEventListener('click', function () {
-    editingDayOff = !editingDayOff;
+    var today = todayKey();
+    var days = loadDays();
+    var idx = days.findIndex(function (d) { return d.date === today; });
+    var newOff;
+    if (idx === -1) {
+      newOff = true;
+      days.push({ date: today, savedAt: new Date().toISOString(), dayOff: true });
+    } else {
+      newOff = !days[idx].dayOff;
+      days[idx] = Object.assign({}, days[idx], { dayOff: newOff, savedAt: new Date().toISOString() });
+    }
+    saveDays(days);
+    if (editingDate === today) {
+      editingDayOff = newOff;
+      updateDeleteBtn();
+    }
     updateDayOffButtonState();
-    var entry = persistCurrentEntry();
-    showSavedFeedback(entry.savedAt);
-    if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
     renderCalendar();
+    if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
   });
   var calViewDate = new Date();
   calViewDate.setDate(1);
@@ -1060,7 +1086,6 @@
     updateDeleteBtn();
     updateLiveCalc();
     updatePunchButtonState();
-    updateDayOffButtonState();
     renderCalendar();
     renderTodayPlatformDist();
   }
@@ -1258,6 +1283,8 @@
       renderHomeDateLabel();
       renderHomeTodaySummary();
       renderCash568LifetimeTotal();
+      renderHomeTodayHours();
+      updateDayOffButtonState();
     }
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
@@ -1399,6 +1426,14 @@
       .filter(function (e) { return e.date === todayKey(); })
       .reduce(function (s, e) { return s + (e.amount || 0); }, 0);
     document.getElementById('homeTodayExpense').textContent = fmt(todayExpenseSum);
+  }
+
+  function renderHomeTodayHours() {
+    var todayEntry = loadDays().find(function (d) { return d.date === todayKey(); });
+    document.getElementById('homeTodayStart').textContent = (todayEntry && todayEntry.startTime) ? todayEntry.startTime : '--:--';
+    document.getElementById('homeTodayEnd').textContent = (todayEntry && todayEntry.endTime) ? todayEntry.endTime : '--:--';
+    var hours = todayEntry ? calcHours(todayEntry.startTime, todayEntry.endTime) : 0;
+    document.getElementById('homeTodayHours').textContent = hours.toFixed(1);
   }
 
   function renderCash568LifetimeTotal() {
