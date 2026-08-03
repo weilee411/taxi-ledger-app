@@ -153,6 +153,7 @@
   .cal-head { text-align: center; font-size: 12px; color: var(--ink-muted); font-weight: 700; padding: 2px 0 6px; }
   .cal-cell { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 15px; font-variant-numeric: tabular-nums; cursor: pointer; background: var(--surface-alt); }
   .cal-cell.empty { background: transparent; cursor: default; }
+  .cal-cell.adjacent-month { opacity: .45; }
   .cal-cell.has-record::after { content: ''; position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
   .cal-cell.today { border: 1.5px solid var(--accent); font-weight: 700; }
   .cal-cell.selected { background: var(--accent); color: var(--accent-ink); }
@@ -310,6 +311,7 @@
   </div>
 
   <div id="tab-today">
+    <p class="home-date-label" id="todayDateLabel"></p>
     <div class="edit-banner" id="editBanner">
       <span id="editingDateLabel"></span>
       <button class="btn small ghost" id="backToToday">回到今天</button>
@@ -351,6 +353,12 @@
       <div class="field"><label id="label-yoxi">yoxi</label><div class="inputgrp"><input type="text" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
       <div class="field"><label id="label-direct">直客</label><div class="inputgrp"><input type="text" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
       <div class="field"><label id="label-other">其他</label><div class="inputgrp"><input type="text" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
+    </div>
+
+    <div class="card">
+      <h2>平台收入分佈</h2>
+      <p class="settings-hint" id="platformDistLabel"></p>
+      <div id="platformDist"></div>
     </div>
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
@@ -432,19 +440,9 @@
     </div>
 
     <div class="card">
-      <h2>平台收入分佈</h2>
-      <p class="settings-hint" id="platformDistLabel"></p>
-      <div id="platformDist"></div>
-    </div>
-
-    <div class="card">
       <h2>568現金累積</h2>
-      <p class="settings-hint">從有紀錄以來，568現金收入的全部歷史加總——這是「拿在手上的現金」，不會因為你把它存進銀行或花掉而自動減少，單純幫你知道總共收了多少現金。</p>
-      <div class="hero">
-        <div class="k">568現金累積總額(全部歷史)</div>
-        <div class="v tnum" id="cash568LifetimeTotal">$0</div>
-      </div>
-      <div class="seg-group" id="cashGranGroup" style="margin-top:14px;">
+      <p class="settings-hint">568現金是你直接拿到手上的錢，不會因為存進銀行或花掉而改變這裡的紀錄——切換天/週/月看這段期間實際收了多少現金。</p>
+      <div class="seg-group" id="cashGranGroup">
         <button type="button" class="seg-btn" data-gran="day">天</button>
         <button type="button" class="seg-btn active" data-gran="week">週</button>
         <button type="button" class="seg-btn" data-gran="month">月</button>
@@ -1031,6 +1029,14 @@
       document.getElementById('editingDateLabel').textContent = '正在編輯 ' + formatDateLabel(editingDate);
     }
     document.getElementById('saveBtn').setAttribute('aria-label', isToday ? '儲存今天' : ('儲存 ' + formatDateLabel(editingDate)));
+
+    var dateLabel = document.getElementById('todayDateLabel');
+    dateLabel.style.display = isToday ? 'block' : 'none';
+    if (isToday) {
+      var d = new Date();
+      var weekday = ['日','一','二','三','四','五','六'][d.getDay()];
+      dateLabel.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + weekday;
+    }
   }
 
   function updateDeleteBtn() {
@@ -1056,6 +1062,7 @@
     updatePunchButtonState();
     updateDayOffButtonState();
     renderCalendar();
+    renderTodayPlatformDist();
   }
 
   document.getElementById('backToToday').addEventListener('click', function () {
@@ -1096,10 +1103,23 @@
       el.textContent = w;
       grid.appendChild(el);
     });
+    var prevMonthLastDate = new Date(year, month, 0);
+    var prevMonthDays = prevMonthLastDate.getDate();
+    var prevYear = prevMonthLastDate.getFullYear();
+    var prevMonthIndex = prevMonthLastDate.getMonth();
     for (var i = 0; i < startWeekday; i++) {
-      var blank = document.createElement('div');
-      blank.className = 'cal-cell empty';
-      grid.appendChild(blank);
+      var prevDay = prevMonthDays - startWeekday + 1 + i;
+      var prevDateStr = prevYear + '-' + pad2(prevMonthIndex + 1) + '-' + pad2(prevDay);
+      var prevCell = document.createElement('div');
+      var prevCls = 'cal-cell adjacent-month';
+      if (prevDateStr === todayStr) prevCls += ' today';
+      if (prevDateStr === editingDate) prevCls += ' selected';
+      if (recordSet[prevDateStr]) prevCls += ' has-record';
+      if (dayOffSet[prevDateStr]) prevCls += ' day-off';
+      prevCell.className = prevCls;
+      prevCell.textContent = prevDay;
+      prevCell.setAttribute('data-date', prevDateStr);
+      grid.appendChild(prevCell);
     }
     for (var day = 1; day <= daysInMonth; day++) {
       var dateStr = year + '-' + pad2(month + 1) + '-' + pad2(day);
@@ -1207,6 +1227,7 @@
     saveDays(days);
     updateDeleteBtn();
     renderCalendar();
+    renderTodayPlatformDist();
     return entry;
   }
 
@@ -1348,9 +1369,15 @@
     document.getElementById('statsCurLabel').textContent = formatRangeLabel(statsGranularity, range);
     document.getElementById('statsCurTotal').textContent = fmt(sum);
     document.getElementById('statsJumpDate').value = formatDateStr(range.start);
+  }
 
-    document.getElementById('platformDistLabel').textContent = formatRangeLabel(statsGranularity, range) + ' 各平台佔比';
-    renderPlatformDist(days, range);
+  function renderTodayPlatformDist() {
+    var parts = editingDate.split('-');
+    var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    var range = getDayRange(d);
+    document.getElementById('platformDistLabel').textContent =
+      (editingDate === todayKey() ? '今天' : formatDateLabel(editingDate)) + ' 各平台佔比';
+    renderPlatformDist(loadDays(), range);
   }
 
   function renderHomeDateLabel() {
@@ -1370,9 +1397,6 @@
 
   function renderCash568LifetimeTotal() {
     var days = loadDays();
-    var total = days.reduce(function (s, d) { return s + (d.cash568 || 0); }, 0);
-    document.getElementById('cash568LifetimeTotal').textContent = fmt(total);
-
     var range = computeRange(cashGranularity, cashRefDate);
     var startStr = formatDateStr(range.start), endStr = formatDateStr(range.end);
     var periodSum = days.reduce(function (s, d) {
