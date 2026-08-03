@@ -135,7 +135,7 @@
   .empty { text-align: center; font-size: 14px; color: var(--ink-muted); padding: 12px 0; }
 
   .edit-banner { display: none; align-items: center; justify-content: space-between; background: var(--surface-alt); border: 1px solid var(--pending); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-  .edit-banner span { font-size: 15px; font-weight: 700; color: var(--pending); }
+  .edit-banner span { font-size: 15px; font-weight: 700; color: var(--pending); cursor: pointer; }
 
   .update-banner { display: none; align-items: center; justify-content: space-between; gap: 10px; background: var(--accent); color: var(--accent-ink); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; position: sticky; top: 8px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
   .update-banner span { font-size: 15px; font-weight: 700; }
@@ -401,7 +401,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="calendarCard">
       <h2>日曆</h2>
       <div class="cal-topbar">
         <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
@@ -1067,6 +1067,12 @@
 
   document.getElementById('backToToday').addEventListener('click', function () {
     loadDateIntoForm(todayKey());
+  });
+
+  document.getElementById('editingDateLabel').addEventListener('click', function () {
+    switchTab('home');
+    var calCard = document.getElementById('calendarCard');
+    if (calCard) calCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 
   document.getElementById('deleteDayBtn').addEventListener('click', function () {
