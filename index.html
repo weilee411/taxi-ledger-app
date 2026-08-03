@@ -319,7 +319,6 @@
 
     <div class="card">
       <h2>工時記錄</h2>
-      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
       <div class="punch-times">
         <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
         <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
@@ -382,6 +381,7 @@
 
     <div class="card">
       <h2>工時記錄</h2>
+      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
       <div class="dayoff-row">
         <button type="button" class="btn small ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
       </div>
@@ -964,16 +964,14 @@
     });
   });
   ['startTime', 'endTime'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); updatePunchButtonState(); });
+    document.getElementById(id).addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); });
   });
 
   function updatePunchButtonState() {
     var btn = document.getElementById('punchBtn');
-    var isToday = editingDate === todayKey();
-    if (!isToday) { btn.style.display = 'none'; return; }
-    btn.style.display = 'block';
-    var start = document.getElementById('startTime').value;
-    var end = document.getElementById('endTime').value;
+    var todayEntry = loadDays().find(function (d) { return d.date === todayKey(); });
+    var start = todayEntry ? todayEntry.startTime : '';
+    var end = todayEntry ? todayEntry.endTime : '';
     btn.classList.remove('punch-active', 'ghost');
     if (!start) {
       btn.textContent = '▶ 打卡上班';
@@ -989,21 +987,31 @@
   document.getElementById('punchBtn').addEventListener('click', function () {
     var now = new Date();
     var nowStr = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-    var startEl = document.getElementById('startTime');
-    var endEl = document.getElementById('endTime');
-    if (!startEl.value) {
-      startEl.value = nowStr;
-    } else if (!endEl.value) {
-      endEl.value = nowStr;
+    var today = todayKey();
+    var days = loadDays();
+    var idx = days.findIndex(function (d) { return d.date === today; });
+    var entry = idx === -1 ? { date: today, savedAt: new Date().toISOString() } : Object.assign({}, days[idx]);
+    if (!entry.startTime) {
+      entry.startTime = nowStr;
+    } else if (!entry.endTime) {
+      entry.endTime = nowStr;
     } else {
-      startEl.value = '';
-      endEl.value = '';
+      entry.startTime = '';
+      entry.endTime = '';
     }
-    updateLiveCalc();
+    entry.savedAt = new Date().toISOString();
+    if (idx === -1) { days.push(entry); } else { days[idx] = entry; }
+    saveDays(days);
+    if (editingDate === today) {
+      document.getElementById('startTime').value = entry.startTime;
+      document.getElementById('endTime').value = entry.endTime;
+      updateLiveCalc();
+      updateDeleteBtn();
+    }
     updatePunchButtonState();
+    renderHomeTodayHours();
+    renderCalendar();
     if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
-    var entry = persistCurrentEntry(); // 打卡三個動作(上班/下班/重置)都直接存檔,不用再手動按儲存
-    showSavedFeedback(entry.savedAt);
   });
 
   function formatDateLabel(dateStr) {
@@ -1085,7 +1093,6 @@
     updateEditBanner();
     updateDeleteBtn();
     updateLiveCalc();
-    updatePunchButtonState();
     renderCalendar();
     renderTodayPlatformDist();
   }
@@ -1285,6 +1292,7 @@
       renderCash568LifetimeTotal();
       renderHomeTodayHours();
       updateDayOffButtonState();
+      updatePunchButtonState();
     }
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
