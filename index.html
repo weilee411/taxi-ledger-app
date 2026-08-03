@@ -441,8 +441,25 @@
       <h2>568現金累積</h2>
       <p class="settings-hint">從有紀錄以來，568現金收入的全部歷史加總——這是「拿在手上的現金」，不會因為你把它存進銀行或花掉而自動減少，單純幫你知道總共收了多少現金。</p>
       <div class="hero">
-        <div class="k">568現金累積總額</div>
+        <div class="k">568現金累積總額(全部歷史)</div>
         <div class="v tnum" id="cash568LifetimeTotal">$0</div>
+      </div>
+      <div class="seg-group" id="cashGranGroup" style="margin-top:14px;">
+        <button type="button" class="seg-btn" data-gran="day">天</button>
+        <button type="button" class="seg-btn active" data-gran="week">週</button>
+        <button type="button" class="seg-btn" data-gran="month">月</button>
+      </div>
+      <div class="yoy-nav" style="margin-top:12px;">
+        <button type="button" class="cal-nav small" id="cashPrevBtn" aria-label="上一期">‹</button>
+        <label class="yoy-label-btn" for="cashJumpDate">
+          <span class="yoy-label" id="cashCurLabel"></span>
+          <input type="date" id="cashJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月">
+        </label>
+        <button type="button" class="cal-nav small" id="cashNextBtn" aria-label="下一期">›</button>
+      </div>
+      <div class="hero" style="margin-top:12px;">
+        <div class="k">這段期間568現金收入</div>
+        <div class="v tnum" id="cashPeriodTotal">$0</div>
       </div>
     </div>
   </div>
@@ -1236,6 +1253,8 @@
   // ---- 收入總覽(天/週/月/年,單一可導覽期間) ----
   var statsGranularity = 'week';
   var statsRefDate = new Date(); // 目前導覽到哪一期,預設「本期」(含今天)
+  var cashGranularity = 'week';
+  var cashRefDate = new Date();
 
   function getDayRange(date) {
     var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1286,6 +1305,11 @@
     return formatDateStr(range.end) >= todayKey();
   }
 
+  function isAtLatestCashPeriod() {
+    var range = computeRange(cashGranularity, cashRefDate);
+    return formatDateStr(range.end) >= todayKey();
+  }
+
   function renderPlatformDist(days, range) {
     var labels = loadLabels();
     var sums = {};
@@ -1296,7 +1320,7 @@
         ids.forEach(function (id) { sums[id] += (d[id] || 0); });
       }
     });
-    sums.online568 = roundHalfAwayFromZero(sums.online568 * 0.85);
+    sums.online568 = calcNetOnline568(sums.cash568, sums.online568);
     var total = ids.reduce(function (s, id) { return s + sums[id]; }, 0);
     var container = document.getElementById('platformDist');
     container.innerHTML = '';
@@ -1345,8 +1369,18 @@
   }
 
   function renderCash568LifetimeTotal() {
-    var total = loadDays().reduce(function (s, d) { return s + (d.cash568 || 0); }, 0);
+    var days = loadDays();
+    var total = days.reduce(function (s, d) { return s + (d.cash568 || 0); }, 0);
     document.getElementById('cash568LifetimeTotal').textContent = fmt(total);
+
+    var range = computeRange(cashGranularity, cashRefDate);
+    var startStr = formatDateStr(range.start), endStr = formatDateStr(range.end);
+    var periodSum = days.reduce(function (s, d) {
+      return (d.date >= startStr && d.date <= endStr) ? s + (d.cash568 || 0) : s;
+    }, 0);
+    document.getElementById('cashCurLabel').textContent = formatRangeLabel(cashGranularity, range);
+    document.getElementById('cashJumpDate').value = formatDateStr(range.start);
+    document.getElementById('cashPeriodTotal').textContent = fmt(periodSum);
   }
 
   document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (btn) {
@@ -1382,6 +1416,38 @@
     // 不管目前是天/週/月/年哪個粒度,選到的這個日期落在哪個週期,就跳去那個週期
     statsRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     renderStats();
+  });
+
+  document.querySelectorAll('#cashGranGroup .seg-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#cashGranGroup .seg-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      cashGranularity = btn.getAttribute('data-gran');
+      cashRefDate = new Date();
+      renderCash568LifetimeTotal();
+    });
+  });
+  document.getElementById('cashPrevBtn').addEventListener('click', function () {
+    if (cashGranularity === 'day') cashRefDate = new Date(cashRefDate.getFullYear(), cashRefDate.getMonth(), cashRefDate.getDate() - 1);
+    else if (cashGranularity === 'week') cashRefDate = new Date(cashRefDate.getFullYear(), cashRefDate.getMonth(), cashRefDate.getDate() - 7);
+    else cashRefDate = new Date(cashRefDate.getFullYear(), cashRefDate.getMonth() - 1, 1);
+    renderCash568LifetimeTotal();
+  });
+  document.getElementById('cashNextBtn').addEventListener('click', function () {
+    if (isAtLatestCashPeriod()) return;
+    if (cashGranularity === 'day') cashRefDate = new Date(cashRefDate.getFullYear(), cashRefDate.getMonth(), cashRefDate.getDate() + 1);
+    else if (cashGranularity === 'week') cashRefDate = new Date(cashRefDate.getFullYear(), cashRefDate.getMonth(), cashRefDate.getDate() + 7);
+    else cashRefDate = new Date(cashRefDate.getFullYear(), cashRefDate.getMonth() + 1, 1);
+    renderCash568LifetimeTotal();
+  });
+  var cashJumpDateEl = document.getElementById('cashJumpDate');
+  cashJumpDateEl.max = todayKey();
+  cashJumpDateEl.addEventListener('change', function () {
+    var v = this.value;
+    if (!v) return;
+    var parts = v.split('-');
+    cashRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    renderCash568LifetimeTotal();
   });
 
   // ---- 對帳(逐日累加,不配對;568/Uber/Bolt/yoxi/直客都可以選) ----
