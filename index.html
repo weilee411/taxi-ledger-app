@@ -355,45 +355,14 @@
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
 
-    <div class="card" style="margin-top:14px;">
-      <h2>歷史紀錄</h2>
-      <div class="cal-topbar">
-        <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
-        <div class="cal-mid">
-          <label class="yoy-label-btn" for="calJumpDate">
-            <span class="cal-month-label" id="calMonthLabel"></span>
-            <input type="date" class="jump-overlay" id="calJumpDate" aria-label="跳到日期">
-          </label>
-        </div>
-        <button type="button" class="cal-nav" id="calNextBtn" aria-label="下個月">›</button>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <div class="cal-legend"><span class="dot"></span> 有紀錄的日期 · 點格子跳去那天編輯</div>
-      <div class="cal-legend"><span class="dot" style="background:var(--pending);"></span> 休假日</div>
-      <div class="daydetail-block">
-        <h2 id="dayDetailTitle">今天的收支</h2>
-        <div class="seg-group" id="dayDetailTabGroup">
-          <button type="button" class="seg-btn active" data-subtab="income">收入</button>
-          <button type="button" class="seg-btn" data-subtab="expense">支出</button>
-        </div>
-        <div id="dayDetailIncome"></div>
-        <div id="dayDetailExpense" style="display:none"></div>
-      </div>
-      <h2 style="margin-top:18px;">最近 7 天</h2>
-      <div class="seg-group" id="recentTabGroup">
-        <button type="button" class="seg-btn active" data-subtab="income">收入</button>
-        <button type="button" class="seg-btn" data-subtab="expense">支出</button>
-      </div>
-      <div id="recentList"></div>
-      <div id="recentExpenseList" style="display:none"></div>
-    </div>
-
     <div style="height:64px;"></div>
   </div>
 
   <button type="button" class="fab-save-round" id="saveBtn" style="display:none;" aria-label="儲存今天">✓</button>
 
-  <div id="tab-stats" style="display:none">
+  <div id="tab-home" style="display:none">
+    <p class="home-date-label" id="homeDateLabel"></p>
+
     <div class="card">
       <h2>工時記錄</h2>
       <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
@@ -409,18 +378,50 @@
     </div>
 
     <div class="card">
+      <h2>當天收支</h2>
+      <div class="seg-group" id="homeTodayTabGroup">
+        <button type="button" class="seg-btn active" data-subtab="income">收入</button>
+        <button type="button" class="seg-btn" data-subtab="expense">支出</button>
+      </div>
+      <div class="hero" id="homeTodayIncomeBlock" style="margin-top:12px;">
+        <div class="k">今日預估收入</div>
+        <div class="v tnum" id="homeTodayIncome">$0</div>
+      </div>
+      <div class="hero" id="homeTodayExpenseBlock" style="display:none; margin-top:12px;">
+        <div class="k">今日支出</div>
+        <div class="v tnum" id="homeTodayExpense">$0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>日曆</h2>
+      <div class="cal-topbar">
+        <button type="button" class="cal-nav" id="calPrevBtn" aria-label="上個月">‹</button>
+        <div class="cal-mid">
+          <label class="yoy-label-btn" for="calJumpDate">
+            <span class="cal-month-label" id="calMonthLabel"></span>
+            <input type="date" class="jump-overlay" id="calJumpDate" aria-label="跳到日期">
+          </label>
+        </div>
+        <button type="button" class="cal-nav" id="calNextBtn" aria-label="下個月">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend"><span class="dot"></span> 有紀錄的日期 · 點格子跳去那天編輯</div>
+      <div class="cal-legend"><span class="dot" style="background:var(--pending);"></span> 休假日</div>
+    </div>
+
+    <div class="card">
       <h2>收入總覽</h2>
       <div class="seg-group" id="statsGranGroup">
         <button type="button" class="seg-btn" data-gran="day">天</button>
         <button type="button" class="seg-btn active" data-gran="week">週</button>
         <button type="button" class="seg-btn" data-gran="month">月</button>
-        <button type="button" class="seg-btn" data-gran="year">年</button>
       </div>
       <div class="yoy-nav" style="margin-top:12px;">
         <button type="button" class="cal-nav small" id="statsPrevBtn" aria-label="上一期">‹</button>
         <label class="yoy-label-btn" for="statsJumpDate">
           <span class="yoy-label" id="statsCurLabel"></span>
-          <input type="date" id="statsJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月/年">
+          <input type="date" id="statsJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月">
         </label>
         <button type="button" class="cal-nav small" id="statsNextBtn" aria-label="下一期">›</button>
       </div>
@@ -434,6 +435,15 @@
       <h2>平台收入分佈</h2>
       <p class="settings-hint" id="platformDistLabel"></p>
       <div id="platformDist"></div>
+    </div>
+
+    <div class="card">
+      <h2>568現金累積</h2>
+      <p class="settings-hint">從有紀錄以來，568現金收入的全部歷史加總——這是「拿在手上的現金」，不會因為你把它存進銀行或花掉而自動減少，單純幫你知道總共收了多少現金。</p>
+      <div class="hero">
+        <div class="k">568現金累積總額</div>
+        <div class="v tnum" id="cash568LifetimeTotal">$0</div>
+      </div>
     </div>
   </div>
 
@@ -636,8 +646,8 @@
   </div>
 
   <div class="tabbar" id="tabbar">
-    <button type="button" class="tab-btn active" data-tab="today">收入支出</button>
-    <button type="button" class="tab-btn" data-tab="stats">統計</button>
+    <button type="button" class="tab-btn" data-tab="home">主頁</button>
+    <button type="button" class="tab-btn" data-tab="today">收入支出</button>
     <button type="button" class="tab-btn-center" id="quickAddBtn" aria-label="快速新增">+</button>
     <button type="button" class="tab-btn" data-tab="recon">對帳</button>
     <button type="button" class="tab-btn" data-tab="accounts">帳戶</button>
@@ -1028,9 +1038,6 @@
     updateLiveCalc();
     updatePunchButtonState();
     updateDayOffButtonState();
-    updateDayDetailTitle();
-    renderDayDetailIncome();
-    renderDayDetailExpense();
     renderCalendar();
   }
 
@@ -1059,13 +1066,14 @@
       if (d.dayOff) dayOffSet[d.date] = true;
     });
 
-    var startWeekday = new Date(year, month, 1).getDay();
+    var jsDay = new Date(year, month, 1).getDay();
+    var startWeekday = (jsDay === 0) ? 6 : jsDay - 1;
     var daysInMonth = new Date(year, month + 1, 0).getDate();
     var todayStr = todayKey();
 
     var grid = document.getElementById('calGrid');
     grid.innerHTML = '';
-    ['日','一','二','三','四','五','六'].forEach(function (w) {
+    ['一','二','三','四','五','六','日'].forEach(function (w) {
       var el = document.createElement('div');
       el.className = 'cal-head';
       el.textContent = w;
@@ -1089,95 +1097,6 @@
       cell.setAttribute('data-date', dateStr);
       grid.appendChild(cell);
     }
-
-    renderRecentList();
-    renderRecentExpenseList();
-    updateDayDetailTitle();
-    renderDayDetailIncome();
-    renderDayDetailExpense();
-  }
-
-  function renderRecentList() {
-    var days = loadDays();
-    var byDate = {};
-    days.forEach(function (d) { byDate[d.date] = d; });
-    var todayStr = todayKey();
-    var container = document.getElementById('recentList');
-    container.innerHTML = '';
-    for (var i = 0; i < 7; i++) {
-      var d = new Date();
-      d.setDate(d.getDate() - i);
-      var dateStr = formatDateStr(d);
-      var entry = byDate[dateStr];
-      var weekday = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-      var row = document.createElement('div');
-      row.className = 'recent-item' + (dateStr === todayStr ? ' today-row' : '');
-      row.setAttribute('data-date', dateStr);
-      var amtHtml;
-      if (entry) {
-        var net = calcNetOnline568(entry.cash568 || 0, entry.online568 || 0);
-        var estimated = (entry.cash568 || 0) + net + (entry.uber || 0) + (entry.bolt || 0) + (entry.yoxi || 0) + (entry.direct || 0) + (entry.other || 0);
-        amtHtml = '<span class="recent-amt tnum">' + fmt(estimated) + '</span>';
-      } else {
-        amtHtml = '<span class="recent-amt empty">—</span>';
-      }
-      row.innerHTML = '<span class="recent-date tnum">' + formatMD(d) + '(' + weekday + ')' + (dateStr === todayStr ? ' · 今天' : '') + '</span>' + amtHtml;
-      container.appendChild(row);
-    }
-  }
-
-  document.getElementById('recentList').addEventListener('click', function (e) {
-    var row = e.target.closest('.recent-item');
-    if (!row) return;
-    loadDateIntoForm(row.getAttribute('data-date'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
-  function renderRecentExpenseList() {
-    var earliest = new Date();
-    earliest.setHours(0, 0, 0, 0);
-    earliest.setDate(earliest.getDate() - 6);
-    var earliestDate = formatDateStr(earliest);
-    var latestDate = todayKey();
-    var expenses = loadExpenses().filter(function (e) {
-      return e.date >= earliestDate && e.date <= latestDate;
-    }).sort(compareExpenseDesc);
-    renderExpenseRows(document.getElementById('recentExpenseList'), expenses);
-  }
-
-  function updateDayDetailTitle() {
-    document.getElementById('dayDetailTitle').textContent = editingDate === todayKey()
-      ? '今天的收支'
-      : formatDateLabel(editingDate) + ' 的收支';
-  }
-
-  function renderDayDetailIncome() {
-    var container = document.getElementById('dayDetailIncome');
-    var entry = loadDays().find(function (d) { return d.date === editingDate; });
-    container.innerHTML = '';
-    if (!entry) {
-      container.innerHTML = '<p class="empty">這天還沒有輸入收入</p>';
-      return;
-    }
-    var labels = loadLabels();
-    ids.forEach(function (id) {
-      var row = document.createElement('div');
-      row.className = 'recent-item';
-      row.innerHTML = '<span class="recent-date">' + labels[id] + '</span><span class="recent-amt tnum">' + fmt(entry[id] || 0) + '</span>';
-      container.appendChild(row);
-    });
-    var cash = entry.cash568 || 0;
-    var online = entry.online568 || 0;
-    var estimated = cash + calcNetOnline568(cash, online) + (entry.uber || 0) + (entry.bolt || 0) + (entry.yoxi || 0) + (entry.direct || 0) + (entry.other || 0);
-    var totalRow = document.createElement('div');
-    totalRow.className = 'recent-item';
-    totalRow.innerHTML = '<span class="recent-date"><strong>預估收入總額</strong></span><span class="recent-amt tnum">' + fmt(estimated) + '</span>';
-    container.appendChild(totalRow);
-  }
-
-  function renderDayDetailExpense() {
-    var expenses = loadExpenses().filter(function (e) { return e.date === editingDate; }).sort(compareExpenseDesc);
-    renderExpenseRows(document.getElementById('dayDetailExpense'), expenses);
   }
 
   function bindSubtabGroup(groupId, incomeId, expenseId) {
@@ -1192,14 +1111,13 @@
     });
   }
 
-  bindSubtabGroup('recentTabGroup', 'recentList', 'recentExpenseList');
-  bindSubtabGroup('dayDetailTabGroup', 'dayDetailIncome', 'dayDetailExpense');
+  bindSubtabGroup('homeTodayTabGroup', 'homeTodayIncomeBlock', 'homeTodayExpenseBlock');
 
   document.getElementById('calGrid').addEventListener('click', function (e) {
     var cell = e.target.closest('.cal-cell:not(.empty)');
     if (!cell) return;
     loadDateIntoForm(cell.getAttribute('data-date'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    switchTab('today');
   });
 
   document.getElementById('calPrevBtn').addEventListener('click', function () {
@@ -1216,7 +1134,7 @@
     var parts = v.split('-');
     calViewDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
     loadDateIntoForm(v);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    switchTab('today');
   });
 
   var settingsPanel = document.getElementById('settingsPanel');
@@ -1283,20 +1201,28 @@
   var currentTab = 'today';
   function switchTab(tab) {
     currentTab = tab;
-    ['today', 'stats', 'recon', 'accounts', 'expenses', 'incomes'].forEach(function (t) {
+    ['today', 'home', 'recon', 'accounts', 'expenses', 'incomes'].forEach(function (t) {
       document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
     });
     document.getElementById('saveBtn').style.display = (tab === 'today') ? 'block' : 'none';
-    if (tab === 'today') renderCalendar();
-    if (tab === 'stats') renderStats();
+    if (tab === 'home') {
+      renderCalendar();
+      renderStats();
+      renderHomeDateLabel();
+      renderHomeTodaySummary();
+      renderCash568LifetimeTotal();
+    }
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
     if (tab === 'expenses') { resetExpenseForm(); }
     if (tab === 'incomes') { resetIncomeForm(); renderIncomeList(); }
     window.scrollTo({ top: 0, behavior: 'instant' in window.scrollTo ? 'instant' : 'auto' });
+    if (['today', 'home', 'recon', 'accounts'].indexOf(tab) !== -1) {
+      localStorage.setItem('taxiLedgerLastTab', tab);
+    }
   }
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
@@ -1370,6 +1296,7 @@
         ids.forEach(function (id) { sums[id] += (d[id] || 0); });
       }
     });
+    sums.online568 = roundHalfAwayFromZero(sums.online568 * 0.85);
     var total = ids.reduce(function (s, id) { return s + sums[id]; }, 0);
     var container = document.getElementById('platformDist');
     container.innerHTML = '';
@@ -1400,6 +1327,26 @@
 
     document.getElementById('platformDistLabel').textContent = formatRangeLabel(statsGranularity, range) + ' 各平台佔比';
     renderPlatformDist(days, range);
+  }
+
+  function renderHomeDateLabel() {
+    var d = new Date();
+    var weekday = ['日','一','二','三','四','五','六'][d.getDay()];
+    document.getElementById('homeDateLabel').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + weekday;
+  }
+
+  function renderHomeTodaySummary() {
+    var todayEntry = loadDays().find(function (d) { return d.date === todayKey(); });
+    document.getElementById('homeTodayIncome').textContent = fmt(todayEntry ? dayEstimatedTotal(todayEntry) : 0);
+    var todayExpenseSum = loadExpenses()
+      .filter(function (e) { return e.date === todayKey(); })
+      .reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+    document.getElementById('homeTodayExpense').textContent = fmt(todayExpenseSum);
+  }
+
+  function renderCash568LifetimeTotal() {
+    var total = loadDays().reduce(function (s, d) { return s + (d.cash568 || 0); }, 0);
+    document.getElementById('cash568LifetimeTotal').textContent = fmt(total);
   }
 
   document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (btn) {
@@ -2584,10 +2531,11 @@
       btn.addEventListener('click', function () {
         setAddSheetType(r._type);
         document.getElementById('addName').value = r.name;
-        document.getElementById('addAmount').value = r.amount;
         document.getElementById('addMerchant').value = r.merchant || '';
         populateCategorySelectForType(r._type, r.category);
         document.getElementById('addAccountSelect').value = r.accountId || '';
+        currentAddTags = (r.tags || []).slice();
+        renderAddTagsChips();
       });
       box.appendChild(btn);
     });
@@ -2813,7 +2761,8 @@
 
   applyLabels();
   loadDateIntoForm(todayKey());
-  document.getElementById('saveBtn').style.display = 'block';
+  var lastTab = localStorage.getItem('taxiLedgerLastTab') || 'today';
+  switchTab(lastTab);
 
   if ('serviceWorker' in navigator) {
     var swHadControllerAtLoad = !!navigator.serviceWorker.controller;
