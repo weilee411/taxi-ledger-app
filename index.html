@@ -114,6 +114,8 @@
   .hero { text-align: center; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 4px; }
   .hero .k { font-size: 13px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .04em; }
   .hero .v { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .hero input.hero-input { width:100%; text-align:center; background:transparent; border:none; font-size:28px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; padding:0; font-family:inherit; }
+  .hero input.hero-input:focus { outline:2px solid var(--accent); outline-offset:2px; border-radius:8px; }
   .hero .v.neg { color: var(--expense); }
   .hero .v.pos { color: var(--income); }
 
@@ -121,6 +123,8 @@
   .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 8px; }
   .stat .k { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; }
   .stat .v { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .stat input.stat-input { width:100%; text-align:center; background:var(--surface-alt); border:1px solid var(--border); border-radius:8px; font-size:16px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; padding:4px 2px; margin-top:4px; font-family:inherit; }
+  .stat input.stat-input:focus { outline:2px solid var(--accent); outline-offset:-1px; }
 
   .btn { display:block; width: 100%; text-align: center; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 12px; padding: 14px; font-size: 17px; font-weight: 700; cursor: pointer; transition: background-color .15s ease; }
   .btn:active { opacity: .85; }
@@ -320,14 +324,20 @@
     </div>
 
     <div class="card">
-      <h2>工時記錄</h2>
+      <h2>工時與里程</h2>
       <div class="punch-times">
         <div class="punch-time-col"><span class="punch-time-label">上線時間</span><input type="time" id="startTime"></div>
         <div class="punch-time-col"><span class="punch-time-label">收工時間</span><input type="time" id="endTime"></div>
       </div>
-      <div class="hero" style="margin-top:10px;">
-        <div class="k" id="totalHoursLabel">今日總工時</div>
-        <div class="v tnum" id="totalHours">0.0</div>
+      <div class="hero-row" style="margin-top:10px;">
+        <div class="hero" style="flex:1;">
+          <div class="k" id="totalHoursLabel">今日總工時</div>
+          <div class="v tnum" id="totalHours">0.0</div>
+        </div>
+        <div class="hero" style="flex:1;">
+          <div class="k">單日里程(km)</div>
+          <input type="text" inputmode="decimal" id="mileage" placeholder="0" class="hero-input">
+        </div>
       </div>
     </div>
 
@@ -428,7 +438,7 @@
     <p class="home-date-label" id="homeDateLabel"></p>
 
     <div class="card">
-      <h2>工時記錄</h2>
+      <h2>工時與里程</h2>
       <div class="punch-dayoff-row">
         <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
         <button type="button" class="btn ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
@@ -441,6 +451,10 @@
       <div class="stats" style="margin-top:10px;">
         <div class="stat"><div class="k">本週總工時</div><div class="v tnum" id="weekHours">0.0</div></div>
         <div class="stat"><div class="k">本月總工時</div><div class="v tnum" id="monthHours">0.0</div></div>
+        <div class="stat">
+          <div class="k">今日里程(km)</div>
+          <input type="text" inputmode="decimal" id="homeMileage" placeholder="0" class="stat-input">
+        </div>
       </div>
     </div>
 
@@ -993,6 +1007,24 @@
       toggleAddMode(id);
     });
   });
+  ['mileage', 'homeMileage'].forEach(function (id) {
+    var el = document.getElementById(id);
+    el.addEventListener('focus', function () {
+      freshFocus[id] = true;
+      this.classList.add('armed');
+    });
+    el.addEventListener('keydown', function (e) {
+      if (!freshFocus[id]) return;
+      var isContentKey = e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete';
+      if (!isContentKey) return;
+      this.value = '';
+      delete freshFocus[id];
+    });
+    el.addEventListener('blur', function () {
+      this.classList.remove('armed');
+      delete freshFocus[id];
+    });
+  });
   document.querySelectorAll('.deposit-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var id = btn.getAttribute('data-target');
@@ -1066,6 +1098,22 @@
     renderHomeTodayHours();
     renderCalendar();
     if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) {} }
+  });
+
+  document.getElementById('homeMileage').addEventListener('change', function () {
+    var val = parseFloat(this.value);
+    if (isNaN(val)) val = 0;
+    var today = todayKey();
+    var days = loadDays();
+    var idx = days.findIndex(function (d) { return d.date === today; });
+    var entry = idx === -1 ? { date: today, savedAt: new Date().toISOString() } : Object.assign({}, days[idx]);
+    entry.mileage = val;
+    entry.savedAt = new Date().toISOString();
+    if (idx === -1) { days.push(entry); } else { days[idx] = entry; }
+    saveDays(days);
+    if (editingDate === today) {
+      document.getElementById('mileage').value = val || '';
+    }
   });
 
   function formatDateLabel(dateStr) {
@@ -1142,6 +1190,7 @@
     });
     document.getElementById('startTime').value = entry ? (entry.startTime || '') : '';
     document.getElementById('endTime').value = entry ? (entry.endTime || '') : '';
+    document.getElementById('mileage').value = entry ? (entry.mileage || '') : '';
     editingDayOff = entry ? !!entry.dayOff : false;
     editingDate = date;
     updateEditBanner();
@@ -1315,6 +1364,7 @@
     ids.forEach(function (id) { entry[id] = num(id); });
     entry.startTime = document.getElementById('startTime').value;
     entry.endTime = document.getElementById('endTime').value;
+    entry.mileage = num('mileage');
     entry.dayOff = editingDayOff;
     var days = loadDays().filter(function (d) { return d.date !== entry.date; });
     days.push(entry);
@@ -1524,6 +1574,7 @@
     document.getElementById('homeTodayEnd').textContent = (todayEntry && todayEntry.endTime) ? todayEntry.endTime : '--:--';
     var hours = todayEntry ? calcHours(todayEntry.startTime, todayEntry.endTime) : 0;
     document.getElementById('homeTodayHours').textContent = hours.toFixed(1);
+    document.getElementById('homeMileage').value = (todayEntry && todayEntry.mileage) ? todayEntry.mileage : '';
   }
 
   function renderCash568LifetimeTotal() {
