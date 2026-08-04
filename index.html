@@ -105,6 +105,7 @@
   .inputgrp input { width: 100px; }
   .addbtn { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--accent); font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer; }
   .addbtn.confirm { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .addbtn.deposit-btn { color: var(--income); }
 
   .subrow { display: flex; align-items: center; justify-content: space-between; font-size: 15px; padding: 6px 0; }
   .subrow .lab { color: var(--ink-muted); }
@@ -126,7 +127,8 @@
   .btn.ghost { background: transparent; color: var(--ink-muted); border: 1px solid var(--border); font-weight: 600; font-size: 15px; padding: 10px; }
   .btn.small { padding: 8px 12px; font-size: 14px; width: auto; }
   .btn.saved { background: var(--income); }
-  .dayoff-row { margin-bottom: 14px; }
+  .punch-dayoff-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .punch-dayoff-row .btn { flex: 1; width: auto; }
   .dayoff-btn { width: auto; }
   .dayoff-btn.active { background: var(--pending); color: var(--accent-ink); border-color: var(--pending); }
   .fab-save-round { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 15; width: 52px; height: 52px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); font-size: 22px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); transition: background-color .15s ease; }
@@ -352,21 +354,66 @@
           <div class="v tnum" id="netOnline568">$0</div>
         </div>
       </div>
+      <button type="button" class="btn ghost small" id="depositBtn568" style="width:100%;margin-top:8px;">✓ 入帳</button>
     </div>
 
     <div class="card">
       <h2>其他平台</h2>
-      <div class="field"><label id="label-uber">Uber</label><div class="inputgrp"><input type="text" inputmode="decimal" id="uber" placeholder="0"><button type="button" class="addbtn" data-target="uber">+</button></div></div>
-      <div class="field"><label id="label-bolt">Bolt</label><div class="inputgrp"><input type="text" inputmode="decimal" id="bolt" placeholder="0"><button type="button" class="addbtn" data-target="bolt">+</button></div></div>
-      <div class="field"><label id="label-yoxi">yoxi</label><div class="inputgrp"><input type="text" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button></div></div>
-      <div class="field"><label id="label-direct">直客</label><div class="inputgrp"><input type="text" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button></div></div>
-      <div class="field"><label id="label-other">其他</label><div class="inputgrp"><input type="text" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button></div></div>
+      <div class="field"><label id="label-uber">Uber</label><div class="inputgrp"><input type="text" inputmode="decimal" id="uber" placeholder="0"><button type="button" class="addbtn" data-target="uber">+</button><button type="button" class="addbtn deposit-btn" data-target="uber" aria-label="入帳">✓</button></div></div>
+      <div class="field"><label id="label-bolt">Bolt</label><div class="inputgrp"><input type="text" inputmode="decimal" id="bolt" placeholder="0"><button type="button" class="addbtn" data-target="bolt">+</button><button type="button" class="addbtn deposit-btn" data-target="bolt" aria-label="入帳">✓</button></div></div>
+      <div class="field"><label id="label-yoxi">yoxi</label><div class="inputgrp"><input type="text" inputmode="decimal" id="yoxi" placeholder="0"><button type="button" class="addbtn" data-target="yoxi">+</button><button type="button" class="addbtn deposit-btn" data-target="yoxi" aria-label="入帳">✓</button></div></div>
+      <div class="field"><label id="label-direct">直客</label><div class="inputgrp"><input type="text" inputmode="decimal" id="direct" placeholder="0"><button type="button" class="addbtn" data-target="direct">+</button><button type="button" class="addbtn deposit-btn" data-target="direct" aria-label="入帳">✓</button></div></div>
+      <div class="field"><label id="label-other">其他</label><div class="inputgrp"><input type="text" inputmode="decimal" id="other" placeholder="0"><button type="button" class="addbtn" data-target="other">+</button><button type="button" class="addbtn deposit-btn" data-target="other" aria-label="入帳">✓</button></div></div>
     </div>
 
     <div class="card">
       <h2>平台收入分佈</h2>
       <p class="settings-hint" id="platformDistLabel"></p>
       <div id="platformDist"></div>
+    </div>
+
+    <div class="card" id="reconStatusCard">
+      <h2>收款狀態</h2>
+      <div class="seg-group" id="reconStatusGranGroup">
+        <button type="button" class="seg-btn active" data-gran="day">天</button>
+        <button type="button" class="seg-btn" data-gran="week">週</button>
+        <button type="button" class="seg-btn" data-gran="month">月</button>
+      </div>
+      <div class="yoy-nav" style="margin-top:12px;">
+        <button type="button" class="cal-nav small" id="reconStatusPrevBtn" aria-label="上一期">‹</button>
+        <label class="yoy-label-btn" for="reconStatusJumpDate">
+          <span class="yoy-label" id="reconStatusCurLabel"></span>
+          <input type="date" id="reconStatusJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月">
+        </label>
+        <button type="button" class="cal-nav small" id="reconStatusNextBtn" aria-label="下一期">›</button>
+      </div>
+      <div class="stats" style="margin-top:12px;">
+        <div class="stat"><div class="k">預估收入</div><div class="v tnum" id="reconStatusEst">$0</div></div>
+        <div class="stat"><div class="k">已入帳</div><div class="v tnum" id="reconStatusAct">$0</div></div>
+        <div class="stat"><div class="k">未入帳</div><div class="v tnum" id="reconStatusOutstanding">$0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>568現金累積</h2>
+      <p class="settings-hint">568現金是你直接拿到手上的錢,不會因為存進銀行或花掉而改變這裡的紀錄——切換天/週/月看這段期間實際收了多少現金。</p>
+      <div class="seg-group" id="cashGranGroup">
+        <button type="button" class="seg-btn" data-gran="day">天</button>
+        <button type="button" class="seg-btn active" data-gran="week">週</button>
+        <button type="button" class="seg-btn" data-gran="month">月</button>
+      </div>
+      <div class="yoy-nav" style="margin-top:12px;">
+        <button type="button" class="cal-nav small" id="cashPrevBtn" aria-label="上一期">‹</button>
+        <label class="yoy-label-btn" for="cashJumpDate">
+          <span class="yoy-label" id="cashCurLabel"></span>
+          <input type="date" id="cashJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月">
+        </label>
+        <button type="button" class="cal-nav small" id="cashNextBtn" aria-label="下一期">›</button>
+      </div>
+      <div class="hero" style="margin-top:12px;">
+        <div class="k">這段期間568現金收入</div>
+        <div class="v tnum" id="cashPeriodTotal">$0</div>
+      </div>
     </div>
 
     <button class="btn ghost small" id="deleteDayBtn" style="display:none;">🗑 刪除這天的紀錄</button>
@@ -381,9 +428,9 @@
 
     <div class="card">
       <h2>工時記錄</h2>
-      <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
-      <div class="dayoff-row">
-        <button type="button" class="btn small ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
+      <div class="punch-dayoff-row">
+        <button type="button" class="btn" id="punchBtn">▶ 打卡上班</button>
+        <button type="button" class="btn ghost dayoff-btn" id="dayOffToggle">🏖 標記為休假日</button>
       </div>
       <div class="stats">
         <div class="stat"><div class="k">今日上班</div><div class="v tnum" id="homeTodayStart">--:--</div></div>
@@ -430,7 +477,10 @@
     </div>
 
     <div class="card">
-      <h2>收入總覽</h2>
+      <div class="cal-topbar" style="margin-bottom:12px;">
+        <h2 style="margin:0;">收入總覽</h2>
+        <button type="button" class="btn ghost small" id="statsDetailBtn">明細 →</button>
+      </div>
       <div class="seg-group" id="statsGranGroup">
         <button type="button" class="seg-btn" data-gran="day">天</button>
         <button type="button" class="seg-btn active" data-gran="week">週</button>
@@ -450,27 +500,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2>568現金累積</h2>
-      <p class="settings-hint">568現金是你直接拿到手上的錢，不會因為存進銀行或花掉而改變這裡的紀錄——切換天/週/月看這段期間實際收了多少現金。</p>
-      <div class="seg-group" id="cashGranGroup">
-        <button type="button" class="seg-btn" data-gran="day">天</button>
-        <button type="button" class="seg-btn active" data-gran="week">週</button>
-        <button type="button" class="seg-btn" data-gran="month">月</button>
-      </div>
-      <div class="yoy-nav" style="margin-top:12px;">
-        <button type="button" class="cal-nav small" id="cashPrevBtn" aria-label="上一期">‹</button>
-        <label class="yoy-label-btn" for="cashJumpDate">
-          <span class="yoy-label" id="cashCurLabel"></span>
-          <input type="date" id="cashJumpDate" class="jump-overlay" aria-label="跳到指定天/週/月">
-        </label>
-        <button type="button" class="cal-nav small" id="cashNextBtn" aria-label="下一期">›</button>
-      </div>
-      <div class="hero" style="margin-top:12px;">
-        <div class="k">這段期間568現金收入</div>
-        <div class="v tnum" id="cashPeriodTotal">$0</div>
-      </div>
-    </div>
   </div>
 
   <div id="tab-recon" style="display:none">
@@ -963,6 +992,30 @@
       toggleAddMode(id);
     });
   });
+  document.querySelectorAll('.deposit-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-target');
+      var amount = num(id);
+      if (!amount) return;
+      quickAddDeposit(id, amount, editingDate);
+      var original = btn.textContent;
+      btn.textContent = '已';
+      btn.disabled = true;
+      setTimeout(function () { btn.textContent = original; btn.disabled = false; }, 1500);
+      renderReconStatusCard();
+    });
+  });
+  document.getElementById('depositBtn568').addEventListener('click', function () {
+    var amount = calcNetOnline568(num('cash568'), num('online568'));
+    if (!amount) return;
+    quickAddDeposit('568', amount, editingDate);
+    var btn = document.getElementById('depositBtn568');
+    var original = btn.textContent;
+    btn.textContent = '已新增 ✓';
+    btn.disabled = true;
+    setTimeout(function () { btn.textContent = original; btn.disabled = false; }, 1500);
+    renderReconStatusCard();
+  });
   ['startTime', 'endTime'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () { clearSavedFeedback(); updateLiveCalc(); });
   });
@@ -1095,6 +1148,8 @@
     updateLiveCalc();
     renderCalendar();
     renderTodayPlatformDist();
+    renderReconStatusCard();
+    renderCash568LifetimeTotal();
   }
 
   document.getElementById('backToToday').addEventListener('click', function () {
@@ -1266,6 +1321,8 @@
     updateDeleteBtn();
     renderCalendar();
     renderTodayPlatformDist();
+    renderReconStatusCard();
+    renderCash568LifetimeTotal();
     return entry;
   }
 
@@ -1289,11 +1346,11 @@
       renderStats();
       renderHomeDateLabel();
       renderHomeTodaySummary();
-      renderCash568LifetimeTotal();
       renderHomeTodayHours();
       updateDayOffButtonState();
       updatePunchButtonState();
     }
+    if (tab === 'today') { renderReconStatusCard(); renderCash568LifetimeTotal(); }
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
     if (tab === 'expenses') { resetExpenseForm(); }
@@ -1317,6 +1374,8 @@
   var statsRefDate = new Date(); // 目前導覽到哪一期,預設「本期」(含今天)
   var cashGranularity = 'week';
   var cashRefDate = new Date();
+  var reconStatusGranularity = 'day';
+  var reconStatusRefDate = new Date();
 
   function getDayRange(date) {
     var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1369,6 +1428,11 @@
 
   function isAtLatestCashPeriod() {
     var range = computeRange(cashGranularity, cashRefDate);
+    return formatDateStr(range.end) >= todayKey();
+  }
+
+  function isAtLatestReconStatusPeriod() {
+    var range = computeRange(reconStatusGranularity, reconStatusRefDate);
     return formatDateStr(range.end) >= todayKey();
   }
 
@@ -1456,6 +1520,17 @@
     document.getElementById('cashPeriodTotal').textContent = fmt(periodSum);
   }
 
+  function renderReconStatusCard() {
+    var range = computeRange(reconStatusGranularity, reconStatusRefDate);
+    var startStr = formatDateStr(range.start), endStr = formatDateStr(range.end);
+    var summary = reconSummaryAcrossPlatforms(startStr, endStr);
+    document.getElementById('reconStatusCurLabel').textContent = formatRangeLabel(reconStatusGranularity, range);
+    document.getElementById('reconStatusJumpDate').value = startStr;
+    document.getElementById('reconStatusEst').textContent = fmt(summary.est);
+    document.getElementById('reconStatusAct').textContent = fmt(summary.act);
+    document.getElementById('reconStatusOutstanding').textContent = fmt(summary.outstanding);
+  }
+
   document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -1490,6 +1565,19 @@
     statsRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     renderStats();
   });
+  document.getElementById('statsDetailBtn').addEventListener('click', function () {
+    var range = computeRange(statsGranularity, statsRefDate);
+    var startStr = formatDateStr(range.start), endStr = formatDateStr(range.end);
+    var todayStr = todayKey();
+    var targetDate = (todayStr >= startStr && todayStr <= endStr) ? todayStr : endStr;
+    loadDateIntoForm(targetDate);
+    reconStatusGranularity = statsGranularity;
+    reconStatusRefDate = new Date(statsRefDate.getTime());
+    document.querySelectorAll('#reconStatusGranGroup .seg-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-gran') === reconStatusGranularity);
+    });
+    switchTab('today');
+  });
 
   document.querySelectorAll('#cashGranGroup .seg-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -1523,8 +1611,40 @@
     renderCash568LifetimeTotal();
   });
 
+  document.querySelectorAll('#reconStatusGranGroup .seg-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#reconStatusGranGroup .seg-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      reconStatusGranularity = btn.getAttribute('data-gran');
+      reconStatusRefDate = new Date();
+      renderReconStatusCard();
+    });
+  });
+  document.getElementById('reconStatusPrevBtn').addEventListener('click', function () {
+    if (reconStatusGranularity === 'day') reconStatusRefDate = new Date(reconStatusRefDate.getFullYear(), reconStatusRefDate.getMonth(), reconStatusRefDate.getDate() - 1);
+    else if (reconStatusGranularity === 'week') reconStatusRefDate = new Date(reconStatusRefDate.getFullYear(), reconStatusRefDate.getMonth(), reconStatusRefDate.getDate() - 7);
+    else reconStatusRefDate = new Date(reconStatusRefDate.getFullYear(), reconStatusRefDate.getMonth() - 1, 1);
+    renderReconStatusCard();
+  });
+  document.getElementById('reconStatusNextBtn').addEventListener('click', function () {
+    if (isAtLatestReconStatusPeriod()) return;
+    if (reconStatusGranularity === 'day') reconStatusRefDate = new Date(reconStatusRefDate.getFullYear(), reconStatusRefDate.getMonth(), reconStatusRefDate.getDate() + 1);
+    else if (reconStatusGranularity === 'week') reconStatusRefDate = new Date(reconStatusRefDate.getFullYear(), reconStatusRefDate.getMonth(), reconStatusRefDate.getDate() + 7);
+    else reconStatusRefDate = new Date(reconStatusRefDate.getFullYear(), reconStatusRefDate.getMonth() + 1, 1);
+    renderReconStatusCard();
+  });
+  var reconStatusJumpDateEl = document.getElementById('reconStatusJumpDate');
+  reconStatusJumpDateEl.max = todayKey();
+  reconStatusJumpDateEl.addEventListener('change', function () {
+    var v = this.value;
+    if (!v) return;
+    var parts = v.split('-');
+    reconStatusRefDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    renderReconStatusCard();
+  });
+
   // ---- 對帳(逐日累加,不配對;568/Uber/Bolt/yoxi/直客都可以選) ----
-  var RECON_PLATFORMS = ['568', 'uber', 'bolt', 'yoxi', 'direct'];
+  var RECON_PLATFORMS = ['568', 'uber', 'bolt', 'yoxi', 'direct', 'other'];
   var RECON_KEY = 'taxiLedgerBankDeposits';
   var RECON_KEY_LEGACY_568 = 'taxiLedgerBankDeposits568'; // 舊版只有568時的key,讀一次做遷移用
   var OPENING_KEY = 'taxiLedgerOpeningBalance';
@@ -1552,6 +1672,13 @@
 
   function saveDepositsList(arr) {
     localStorage.setItem(RECON_KEY, JSON.stringify(arr));
+  }
+
+  function quickAddDeposit(platform, amount, dateStr) {
+    if (!amount) return;
+    var deposits = loadDeposits();
+    deposits.push({ id: uniqueId('d'), amount: amount, date: dateStr, platform: platform, accountId: '', createdAt: new Date().toISOString() });
+    saveDepositsList(deposits);
   }
 
   function loadOpeningBalances() {
@@ -1742,6 +1869,31 @@
       cumulative += (est - act);
       return { date: date, est: est, act: act, cumulative: cumulative, isOpening: !!(ob && ob.date === date) };
     });
+  }
+
+  function reconOutstandingAsOf(platform, dateStr) {
+    var rows = buildReconRows(platform).filter(function (r) { return r.date <= dateStr; });
+    return rows.length ? rows[rows.length - 1].cumulative : 0;
+  }
+
+  function reconEstimateInRange(platform, startStr, endStr) {
+    return buildReconRows(platform).filter(function (r) { return r.date >= startStr && r.date <= endStr; })
+      .reduce(function (s, r) { return s + r.est; }, 0);
+  }
+
+  function reconActualInRange(platform, startStr, endStr) {
+    return buildReconRows(platform).filter(function (r) { return r.date >= startStr && r.date <= endStr; })
+      .reduce(function (s, r) { return s + r.act; }, 0);
+  }
+
+  function reconSummaryAcrossPlatforms(startStr, endStr) {
+    var estSum = 0, actSum = 0, outstanding = 0;
+    RECON_PLATFORMS.forEach(function (p) {
+      estSum += reconEstimateInRange(p, startStr, endStr);
+      actSum += reconActualInRange(p, startStr, endStr);
+      outstanding += reconOutstandingAsOf(p, endStr);
+    });
+    return { est: estSum, act: actSum, outstanding: outstanding };
   }
 
   function renderOpeningBalance() {
