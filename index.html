@@ -374,6 +374,7 @@
 
     <div class="card" id="reconStatusCard">
       <h2>收款狀態</h2>
+      <select class="recon-platform-select" id="reconStatusPlatformSelect"></select>
       <div class="seg-group" id="reconStatusGranGroup">
         <button type="button" class="seg-btn active" data-gran="day">天</button>
         <button type="button" class="seg-btn" data-gran="week">週</button>
@@ -1350,7 +1351,7 @@
       updateDayOffButtonState();
       updatePunchButtonState();
     }
-    if (tab === 'today') { renderReconStatusCard(); renderCash568LifetimeTotal(); }
+    if (tab === 'today') { populateReconStatusPlatformSelect(); renderReconStatusCard(); renderCash568LifetimeTotal(); }
     if (tab === 'recon') { resetReconForm(); renderRecon(); }
     if (tab === 'accounts') { resetAccountForm(); resetTransferForm(); renderAccounts(); renderTransferList(); }
     if (tab === 'expenses') { resetExpenseForm(); }
@@ -1376,6 +1377,23 @@
   var cashRefDate = new Date();
   var reconStatusGranularity = 'day';
   var reconStatusRefDate = new Date();
+  var reconStatusPlatform = '568';
+
+  function populateReconStatusPlatformSelect() {
+    var sel = document.getElementById('reconStatusPlatformSelect');
+    sel.innerHTML = '';
+    RECON_PLATFORMS.forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = reconPlatformLabel(p);
+      sel.appendChild(opt);
+    });
+    sel.value = reconStatusPlatform;
+  }
+  document.getElementById('reconStatusPlatformSelect').addEventListener('change', function () {
+    reconStatusPlatform = this.value;
+    renderReconStatusCard();
+  });
 
   function getDayRange(date) {
     var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1523,12 +1541,14 @@
   function renderReconStatusCard() {
     var range = computeRange(reconStatusGranularity, reconStatusRefDate);
     var startStr = formatDateStr(range.start), endStr = formatDateStr(range.end);
-    var summary = reconSummaryAcrossPlatforms(startStr, endStr);
+    var est = reconEstimateInRange(reconStatusPlatform, startStr, endStr);
+    var act = reconActualInRange(reconStatusPlatform, startStr, endStr);
+    var outstanding = reconOutstandingAsOf(reconStatusPlatform, endStr);
     document.getElementById('reconStatusCurLabel').textContent = formatRangeLabel(reconStatusGranularity, range);
     document.getElementById('reconStatusJumpDate').value = startStr;
-    document.getElementById('reconStatusEst').textContent = fmt(summary.est);
-    document.getElementById('reconStatusAct').textContent = fmt(summary.act);
-    document.getElementById('reconStatusOutstanding').textContent = fmt(summary.outstanding);
+    document.getElementById('reconStatusEst').textContent = fmt(est);
+    document.getElementById('reconStatusAct').textContent = fmt(act);
+    document.getElementById('reconStatusOutstanding').textContent = fmt(outstanding);
   }
 
   document.querySelectorAll('#statsGranGroup .seg-btn').forEach(function (btn) {
@@ -1884,16 +1904,6 @@
   function reconActualInRange(platform, startStr, endStr) {
     return buildReconRows(platform).filter(function (r) { return r.date >= startStr && r.date <= endStr; })
       .reduce(function (s, r) { return s + r.act; }, 0);
-  }
-
-  function reconSummaryAcrossPlatforms(startStr, endStr) {
-    var estSum = 0, actSum = 0, outstanding = 0;
-    RECON_PLATFORMS.forEach(function (p) {
-      estSum += reconEstimateInRange(p, startStr, endStr);
-      actSum += reconActualInRange(p, startStr, endStr);
-      outstanding += reconOutstandingAsOf(p, endStr);
-    });
-    return { est: estSum, act: actSum, outstanding: outstanding };
   }
 
   function renderOpeningBalance() {
